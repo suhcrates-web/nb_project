@@ -8,9 +8,9 @@ def jongsung(word, context):
     ja = word[-1] #마지막 글자
     jong = ((ord(ja)-ord('가'))/28)%1
     if jong ==0 :  #나눠떨어짐. 받침 없는 경우
-        result = {'은는':'는', '이가': '가', '을를':'를', '이다':'다', '와과':'와', '으로':'로' }
+        result = {'은는':'는', '이가': '가', '을를':'를', '이다':'다', '와과':'와', '으로':'로', '했다고':'고' }
     else :
-        result = {'은는':'은', '이가': '이', '을를':'을', '이다':'이다', '와과':'과', '으로':'으로' }
+        result = {'은는':'은', '이가': '이', '을를':'을', '이다':'이다', '와과':'과', '으로':'으로' , '했다고':'이라고'}
 
     return result[context]
 
@@ -102,13 +102,13 @@ def inc_rate(a):
     a = a.replace('%','')
     return a
 
-
-
-#####조회공시에 대한 답변###. '당사는 ~~~검토중에 있으나 확정된 사항이 없다" 문장 만들어줌
-#fr(raw 버전)의 '답변내용' 부분을 넣어주면 'sentence'를 뱉음. 반드시 '검토' '확정' '없' '당사는' 이 포함돼야하며, 그 문장만 뱉어냄.
-def make_sentence(answer_0):
-
-    date_in_text = re.findall(r'\d{4}\.\s?\d{2}\.\s?\d{2}\.?' , answer_0)
+##################################
+######조회공시요구 답변 용#########
+#통문단을 받아 '.'을 기준으로 나눠줌. 다만  '2020.01.03' 은 '2020년1월3일'로 바꿔주고, 3.49% 처럼 . 뒤에 숫자가 있으면 건너뜀
+def dadum_tong_mun(tong_mun_0): #통문장들을 다듬음
+    #나눠지지 않은 통문장이 들어옴
+    ##2021.09.09 을 2021년9월9일 로 변환
+    date_in_text = re.findall(r'\d{4}\.\s?\d{2}\.\s?\d{2}\.?' , tong_mun_0)
     subs = []
     for i in date_in_text:
         Y =re.findall(r'\d+(?=\.)',i)[0]
@@ -118,45 +118,88 @@ def make_sentence(answer_0):
         d = re.findall(r'\d+',i)[0]
         sub = f'{str(int(Y))}년{str(int(m))}월{str(int(d))}일'
         subs.append(sub)
-    answer= re.sub(r'\d{4}\.\s?\d{2}\.\s?\d{2}\.?', '{}', answer_0)
-    answer = answer.format(*subs)
-    answers_0 = re.split('\. |\n', answer)
-    answers = []
-    for i in answers_0:
-        i = re.sub(r'\s+', r' ', i)
-        if i in ['' , ' ']:
-            pass
-        else:
-            answers.append(i.strip())
+    tong_mun= re.sub(r'\d{4}\.\s?\d{2}\.\s?\d{2}\.?', '{}', tong_mun_0)
+    tong_mun = tong_mun.format(*subs)
+
+    ## . 을 기준으로 문장들을 나눠 리스트화. **다만  3.39% 처럼  . 뒤에 숫자가 있는 경우는 건너뜀.
+    def split_mun(a):
+        list_sens = [] #list of sentences
+        end = False
+        while end == False:
+            sentence = ''
+            j = 0
+            for i in a:
+                if i not in ['.', '-']:
+                    sentence += i
+                    j +=1
+                elif bool(re.search(r'[.-]\d',a[j:j+2])) :
+                    sentence += i
+                    j +=1
+                else:
+                    list_sens.append(sentence)
+                    j += 1
+                    a = a[j:]
+                    break
+
+            if len(a) ==j :
+                end = True
+        return list_sens
+
+    list_sentences = split_mun(tong_mun)
+
+    return list_sentences
 
 
-    n=0
-    for i in answers:
-        sure = ['검토','없', '확정']
-        sure_bool = True
-        for j in sure:
-            if not re.search(j, i):
-                sure_bool = False  #한개라도 일치하는 게 없으면 False.
-                break
-        if not bool(re.search('당사가|당사는',i)): #당사가, 당사는 둘다 없으면 역시 False
-            sure_bool = False
-        if sure_bool ==True: #sure과 모두 일치하면
-            break  #멈추고 n을 내놓음
-
-        n+=1         #아니면 n을 하나 더한 뒤 루프를 계속 진행
-
-    if n == len(answers):
-        raise Exception("맞는 문장이 없음")
-
-    sentence= answers[n]
+###문장* 안에 보도 해명 내용이 있는지 체크 후 result를 뱉음. ##
+def bodo_hm(list_sentences):
+    p = 0
+    hm = ''
     try:
-        sentence= sentence[sentence.index('당사는'):]
+        for i in list_sentences:
+            if bool(re.search(r"""\".+[^\"].+\"""", i)):  # " " 안에 들어있는 문장이 있을 경우
+                tit = re.findall(r"""\".+[^\"].+\"""", i)[0]  # tit : 기사제목
+                if bool(re.search(r'기사|보도|언론',list_sentences[p])) :
+                    try:
+                        hm= i[i.index('당사는'):]   # hm : 해명문.  당사는, 당사의 로 시작.
+                    except:
+                        hm= i[i.index('당사의'):]   # 당사~
+                    break #하나 만들면 멈춤
+            p +=1
+
+        relation = True # 관계 없다
+        if hm != '':
+            if '없' in hm:
+                hm = hm[:hm.index('없')+1] +'다'
+                relation = False
+
+            else:
+                for j in ['입니다','습니다','였습니다','합니다','했습니다']:
+                    if j in hm:
+                        hm = hm[:hm.index(j)] + jongsung(hm, '이다')
+                        break
+        print(hm)
+
+        text_bodo_hm = f"""최근의 {tit} 보도와 관련해서는 "{hm}"{jongsung(hm,'했다고')} 밝혔다"""
+        return {'result':text_bodo_hm, 'relation':relation}
     except:
-        sentence= sentence[sentence.index('당사가'):]
+        return {'result':False}
 
-    sentence = sentence[:sentence.index('없')+1]+'다'
+###'당사는(당사가, 현재) ~~ 확정 ~~~없다'
+def dangsa(list_sentences):
+    n=0
+    result = False
+    try:
+        for i in list_sentences:
+            n +=1
+            if not bool(re.search(r'\(미확정\)|\(\s?풍문\s?또는\s?보도\s?\)|\(재공시\)',i)): #여기 걸리면 무조건 걸러냄
+                if bool(re.search(r'확정.*없|결정.*없',i)): #그 중 '확정 ~ 없' 을 담은 문장
+                    for j in ['당사는', '당사가', '현재']:  #의 앞에 이것들이 있는지 찾아봄.
 
-    return sentence
+                        if j in i:
+                            sent = i[i.index(j):i.index('없')+1] +'다'
+                            result = sent
+                            break
 
-
-# print(jongsung('병신','은는'))
+        return {'result':result}  #문장을 내보냄
+    except :
+        return {'result':False} #위에 수집된게 없으면 False를 내보냄

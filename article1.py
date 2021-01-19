@@ -4,7 +4,7 @@
 from datetime import date, datetime
 from banolim import banolim
 import pandas, re, math
-from toolBox import jongsung, word_to_date, siljeok_gigan, inc_rate
+from toolBox import jongsung, word_to_date, siljeok_gigan, inc_rate, dadum_tong_mun, dangsa, bodo_hm
 from kospi200_list import kospi200
 
 
@@ -28,7 +28,10 @@ def otherCorp(f=None, crpNm=None, sou_html=None, **kwargs):
         corpNm = crpNm
         relation = f[f.index('회사와 관계')+1]
         purpose = f[f.index('처분목적')+1]
-        opCorpNm = f[f.index('회사명(국적)')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
+        try:
+            opCorpNm = f[f.index('회사명(국적)')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
+        except:
+            opCorpNm = f[f.index('회사명')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
         cheobun = f[f.index('처분주식수(주)')+1]
         jagi = f[f.index('자기자본대비(%)')+1]
         chebunPrice = f[f.index('처분금액(원)')+1]
@@ -40,8 +43,10 @@ def otherCorp(f=None, crpNm=None, sou_html=None, **kwargs):
             title = "{}, {} {} 지분 {}원에 전량 처분".format(corpNm, relation, opCorpNm, banolim(chebunPrice, gijun='억'))
 
             article = '''
-    {}{} {}를 위해 보유중인 {} {}의 지분 {}%({}주)를 약 {}원에 처분 결정했다고 {}일 공시했다.<br><br>{}의 주요 사업은 {}이며 자본금은 {}원이다.
-        '''.format(corpNm, jongsung(corpNm,'은는'), purpose, relation, opCorpNm, jagi, banolim(cheobun, gijun='일'),
+    {}{} {}{} 위해 보유중인 {} {}의 지분 {}%({}주)를 약 {}원에 처분 결정했다고 {}일 공시했다.<br><br>{}의 주요 사업은 {}이며 자본금은 {}원이다.
+        '''.format(corpNm, jongsung(corpNm,'은는'), purpose, jongsung(purpose, '을를'), relation, opCorpNm, jagi, \
+                                                                              banolim(cheobun,
+                                                                                                     gijun='일'),
                    banolim(chebunPrice, gijun='억'), today , opCorpNm, juyosaup, jabongum  )
         else:
             title = "{}, {} {} 지분 {}원에 처분...잔여 지분 {}%".format(corpNm, relation, opCorpNm, banolim(chebunPrice,
@@ -56,6 +61,8 @@ def otherCorp(f=None, crpNm=None, sou_html=None, **kwargs):
     else:
         raise Exception('자회사, 계열사, 관계사가 아님')
 dict_can['타법인주식및출자증권처분결정']=otherCorp #이게 각 def 위에 붙어서 해당 기사유형의 이름이 됨.
+
+
 
 
 #현금ㆍ현물배당 결정
@@ -80,9 +87,9 @@ def a_hBaedang(f=None, crpNm=None, sou_html=None, **kwargs):
 
         title = "{}, 주당 {}원 {} 결정".format(corpNm, banolim(botong,'원', '일'), baeKind)
         article = """
-        {}{} 보통주 1주당 {}원의 {}을 결정했다고 {}일 공시했다. 배당금 총액은 {}원이다. 배당기준일은 {}이다.
-        """.format(corpNm, jongsung(corpNm,'은는'), banolim(botong,'원', '일'), baeKind, today, banolim(baeTotal,'원','일'), \
-                                         gijun_wan )
+        {}{} 보통주 1주당 {}원의 {}{} 결정했다고 {}일 공시했다. 배당금 총액은 {}원이다. 배당기준일은 {}이다.
+        """.format(corpNm, jongsung(corpNm,'은는'), banolim(botong,'원', '일'), baeKind, jongsung(baeKind,'을를'), today,
+                   banolim(baeTotal,'원','일'), gijun_wan )
         return {'title':title, 'article':article, 'table': '배당기준일'}
     else:
         raise Exception("보통주가 아님")
@@ -1005,6 +1012,70 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
     return {'title':title, 'article':article, 'table': ['실적내용', '정보제공내역', -2]}
 dict_can['영업(잠정)실적(공정공시)'] = siljeok
 
+
+#조회공시요구(풍문또는보도)에대한답변(미확정)
+def johwae_ans(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, bogoNm=None, **kwargs):
+    cmd = re.findall(r'(?<=\()[^\(\)]+(?=\))', bogoNm)
+    subject = cmd[0]
+    point = cmd[1]
+    today =date.today().day
+    crpNm = crpNm
+    answer_0 = f[3] #답변문
+    #####현저한시황변동######
+    list_sentences =  dadum_tong_mun(answer_0)
+    if subject in ['현저한시황변동']:
+        # 2021.01.01 을 2021년1월1일 로 바꿔줌.  '.'과 '-'을 기준으로 분리. -123 ,
+        # 1.4%  는 놔둠.
+
+        if point in ['미확인', '미확정']:
+            title = f'{crpNm}, 현저한 시황변동에 "확정된 사항 없어"'
+            article = f"""{crpNm}{jongsung(crpNm,'은는')} 최근 나타난 현저한 시황변동과 관련해 확정된 사항이 없다고 {today}일 공시했다."""
+            result = dangsa(list_sentences)['result'] #없으면 false 나옴
+
+            if result != False:
+                article += f'<br><br>최근 제기된 풍문 또는 보도와 관련해서는 "{result}"{jongsung(result,"했다고")} 밝혀다.'
+
+        else:
+            if point in ['중요공시대상없음']:
+                title = f'{crpNm}, 현저한 시황변동에 "주요 공시대상 없어"'
+                article = f"""{crpNm}{jongsung(crpNm,'은는')} 최근 나타난 현저한 시황변동과 관련해 이에 영향을 미칠만 사항으로서 현재 진행중이거나 확정된 공시 규정상 중요한 공시대상이 없다고 {today}일 공시했다."""
+            if point in ['중요정보없음']:
+                title = f'{crpNm}, 현저한 시황변동에 "공시할 중요 정보 없어"'
+                article = f"""{crpNm}{jongsung(crpNm,'은는')} 최근 나타난 현저한 시황변동과 관련해 별도로 공시할 중요한 정보가 없다고 {today}일 공시했다."""
+
+            result_bodo_hm = bodo_hm(list_sentences)
+            text_bodo_hm = result_bodo_hm['result']  # false가 나오거나 문장이 나옴.
+            if text_bodo_hm != False: #보도해명이 나왔다면
+                title +="...보도에 해명"
+                if not result_bodo_hm['relation']:
+                    title += """ "관련 없어" """
+                article += f""" <br><br>{text_bodo_hm} """
+
+    elif subject in ['풍문또는보도']:
+        if point in ['미확정']:
+            #####풍문 내용을 찾는 구간 ####
+            reason =False
+            pung = f[1]
+            if bool(re.search(r'(?<=\()[^\(\)]+설\s?(?=\))',pung)):
+                reason = re.findall(r'(?<=\()[^\(\)]+설\s?(?=\))',pung)[0]
+            else:
+                for i in ['설','보도','관련']:
+                    if i in pung:
+                        reason = pung[:pung.index(i)+len(i)]
+            if not reason:
+                reason = '풍문 또는 보도'
+            result = dangsa(list_sentences)['result']
+            article = ''
+            if result ==False:
+                raise Exception("풍문보도- 답변 문장 못찾음")
+
+            title = f"""{crpNm}, '{reason}'에 "미확정\""""
+            article = f"""{crpNm}은 최근의 '{reason}'{jongsung(reason,'와과')} 관련해 "{result}"{jongsung(result,'했다고')} {today}일 공시했다.  """
+    return {'title':title, 'article':article, 'table':['제목','내용']}
+dict_can['조회공시요구(풍문또는보도)에대한답변(미확정)'] = johwae_ans
+dict_can['조회공시요구(현저한시황변동)에대한답변(미확정)'] = johwae_ans
+dict_can['조회공시요구(현저한시황변동)에대한답변(중요공시대상없음)'] = johwae_ans
+dict_can['조회공시요구(현저한시황변동)에대한답변(중요정보없음)'] = johwae_ans
 
 
 

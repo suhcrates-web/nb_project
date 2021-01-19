@@ -31,10 +31,8 @@ def writer(rcept_no = None, stock_code = None):
     #단일계약 (비건설) 20201214900228(영어이름 어케할건지 과제), 20201214900210, 20201215901225, 20201210900098
     source =rcpNo_to_table(rcept_no)  # list와 html 딕셔너리를 가져옴. list는 공시의 표 부분을 리스트로 쪼갠것. html은 공시 전체 html 원문
 
-
     sou_list = source['list']
     sou_list_s =  source['l_without_space']
-    sou_list_r = source['l_raw']
     sou_html = source['html']
     crpNm = source['crpNm']
     bogoNm= source['bogoNm']
@@ -45,8 +43,7 @@ def writer(rcept_no = None, stock_code = None):
     art_fun = dict_can[bogoNm] # 보고서 이름에 맞는 함수 가져옴
 
     ##list는 기사 원문을 만듦.
-    temp_artc = art_fun(f = sou_list, fs =sou_list_s, crpNm = crpNm, sou_html =sou_html, stock_code = stock_code,
-                        fr=sou_list_r, bogoNm= bogoNm) #
+    temp_artc = art_fun(f = sou_list, fs =sou_list_s, crpNm = crpNm, sou_html =sou_html, stock_code = stock_code, bogoNm= bogoNm) #
     # 리스트를 넣으면 기사가 나옴. title과
     # article
     # 딕셔너리로.
@@ -75,7 +72,7 @@ if __name__ == '__main__':
     # print(todo_list)
     # print(todo_list)
     #
-    writer(20210115800068)
+    writer(20210111900233)
     #
     # for i in todo_list:
     #     try:

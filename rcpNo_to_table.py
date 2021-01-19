@@ -9,7 +9,7 @@ if __name__ == "__main__":
     #20201210000537 #유상증자
     #20201208000293 # 유상증자(정정)
 
-    rcpNo = '20210111900132'
+    rcpNo = '20210111900233'
 
 def rcpNo_to_table(rcpNo):
     #rcpNo를 통해 dcmNo를 추론. 그래야 공시 html 가져올 수 있음.
@@ -59,7 +59,7 @@ def rcpNo_to_table(rcpNo):
         # lr.append(con.replace('\r','\\r').replace('\n','\\n')) #이부분은 테스트 위한 것.
         if not if_html:  #html로 파싱한 문서가 아닌 경우(보고서 형식) \xa0 가 중간에 껴있음. 이걸 제거하기 위한 것.
             con = con.replace(u'\xa0 ', '').replace(u'\xa0', '')
-        lr.append(con.replace('\r','\\r').replace('\n','\\n')) #이부분은 테스트 위한 것.
+        # lr.append(con.replace('\r','\\r').replace('\n','\\n')) #이부분은 테스트 위한 것.  # lr은 폐기함.
         con = re.sub(r'(?<=\d),(?=\d)', '',con)  # ?<= look behind  , ?=  look ahead
         con = re.sub(r'^\d\. ','',con).replace('\n','').replace('\r','').replace('\xa0','')
         con = re.sub(r'\s+',' ',con) ## 여러칸의 공백은 모두 한 칸으로 줄이기.
@@ -71,8 +71,7 @@ def rcpNo_to_table(rcpNo):
         ls.append(con)  # 식별을 쉽게 하기 위해 여백을 제거한 버전
 
 
-
-    return {'html':cont_orig, 'list':l, 'l_without_space':ls, 'l_raw':lr, 'crpNm': crpNm, 'bogoNm':bogoNm,
+    return {'html':cont_orig, 'list':l, 'l_without_space':ls,  'crpNm': crpNm, 'bogoNm':bogoNm,
     'url':url, 'url0':url0}
     #html은 table로, list는 article로 가서 가공됨. list 는 writer의 source로 연결됨
 
@@ -82,16 +81,12 @@ if __name__ == "__main__":
     print(result['url'])
     print(result['list'])
     print(result['l_without_space'])
-    print(result['l_raw'])
     # print(result['bogoNm'])
     f=open('test.txt', 'w', encoding='utf-8')
     f.writelines('%s\n' %x for x in result['list'])
     f.close()
 
     csv.register_dialect('pipes', delimiter = '|')
-    with open('test_r.csv', 'w', encoding='utf-8') as f:
-        for i in result['l_raw']:
-            f.writelines(i+'|')
 
     f= open('pyo.html', 'w', encoding='utf-8')
     f.write(str(result['html']))
