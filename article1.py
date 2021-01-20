@@ -5,7 +5,7 @@ from datetime import date, datetime
 from banolim import banolim
 import pandas, re, math
 from toolBox import jongsung, word_to_date, siljeok_gigan, inc_rate, dadum_tong_mun, dangsa, bodo_hm
-from kospi200_list import kospi200
+from kospi200_list import kos_list
 
 
 #처리할 수있는 공시유형 목록. 빈칸 유지. 아래 append를 통해 채워짐.
@@ -571,7 +571,7 @@ def juju_byun(f=None, crpNm=None, sou_html=None, stock_code= None, **kwargs):
 
     #코스피 200 안에 들거나,  지분 전후차이가 1이 넘거나
 
-    if (stock_code in kospi200()['num_list']) or \
+    if (stock_code in kos_list()['all_num']) or \
             (abs(float(jeon_jibun) - float(hu_jibun))>1) :
         force = True
 
@@ -680,7 +680,7 @@ dict_can['임원ㆍ주요주주특정증권등소유상황보고서'] = juju_sta
 
 
 #최대주주변경
-def juju_change(f=None, fs=None, crpNm=None, sou_html=None, **kwargs):
+def juju_change(f=None, fs=None, crpNm=None, sou_html=None, stock_code= None, **kwargs):
 
     crpNm = crpNm
     today = date.today().day
@@ -737,7 +737,7 @@ def juju_change(f=None, fs=None, crpNm=None, sou_html=None, **kwargs):
     title += '{} 최대주주 {} → {}'.format(crpNm, temp, after_change)
 
     article = """
-    {crpNm}{jong_corp} 최대주주가 {before_change}에서 {after_change}으로 변경됐다고 {today}일 공시했다.<br><br>
+    {crpNm}{jong_corp} 최대주주가 {before_change}에서 {after_change}{jong_af} 변경됐다고 {today}일 공시했다.<br><br>
     변경 사유는 {reason}{reason_jong}. {after_change}은 {after_ju}주({after_bi}%)를 보유해 {crpNm}의 최대주주가 됐다. {before_change}의 지분은 
     {before_ju}주({before_bi}%)다.
     """.format(
@@ -748,6 +748,7 @@ def juju_change(f=None, fs=None, crpNm=None, sou_html=None, **kwargs):
         reason = reason,
         reason_jong = jongsung(reason,'이다'),
         after_change = after_change,
+        jong_af = jongsung(after_change, '으로'),
         after_ju = banolim(after_ju, danwi, '일') ,
         after_bi = after_bi,
         before_ju =  banolim(before_ju, danwi, '일') ,
@@ -817,6 +818,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
             j +=1
         dang = siljeok_gigan(dang_gi, jeon_gi)['dang'] #당기가 언젠지
         gigan = siljeok_gigan(dang_gi, jeon_gi)['gigan'] #분기인지 월인지
+
     #####1차 내용 뽑는 구간#######
     _1cha = {}
 
