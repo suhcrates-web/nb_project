@@ -247,89 +247,88 @@ dict_can['주요사항보고서(유상증자결정)']=a_yuJeung
 
 
 #단일판매ㆍ공급계약체결
-def danil(f=None, crpNm=None, sou_html=None, **kwargs):
+def danil(f=None, crpNm=None, stock_code = None, sou_html=None, **kwargs):
     fs = []
+    force = False
+    machulRate = ''
+    tot = ''
     for i in f:
         i = i.replace(' ','')
         fs.append(i)
     today = date.today().day
     if '판매ㆍ공급계약 내용' in f:
-        if f[f.index('판매ㆍ공급계약 내용')+1] != '건설수주':
+        if f[f.index('판매ㆍ공급계약 내용')+1] != '건설수주': #'건설수주' 는 없긴 함.
             tot = f[f.index('계약금액 총액(원)')+1]
 
             machulRate =  f[fs.index('매출액대비(%)')+1]
 
-            if True in [float(machulRate) > 10]:
-                if True in [float(tot) > 5000000000, float(machulRate) >= 100]:
-
-                    corpNm = crpNm
-                    opCorpNm_sentence = ''
-                    opCorpNm = f[f.index('계약상대방')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
-                    if opCorpNm == '-':
-                        opCorpNm_sentence = ''
-                    else:
-                        business=None
-                        if not bool(re.search(r'[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]', opCorpNm)):
-                            nation = f[f.index('판매ㆍ공급지역')+1]
-                            business=  f[f.index('-주요사업')+1]
-                            b_con = True
-                            if business == '-':
-                                business = '업체'
-                                b_con = False
-                            if not bool(re.search(r'업체$', business)):
-                                if b_con ==False:
-                                    business = business + ' 업체'
-                                else:
-                                    business = business + ' 관련 업체'
-                            opCorpNm = "{} {}({})".format(nation, business, opCorpNm)
-
-                        if business == None:
-                            temp_jongsung = jongsung(opCorpNm, '와과')
+            corpNm = crpNm
+            opCorpNm_sentence = ''
+            opCorpNm = f[f.index('계약상대방')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
+            if opCorpNm == '-':
+                opCorpNm_sentence = ''
+            else:
+                business=None
+                if not bool(re.search(r'[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]', opCorpNm)):
+                    nation = f[f.index('판매ㆍ공급지역')+1]
+                    business=  f[f.index('-주요사업')+1]
+                    b_con = True
+                    if business == '-':
+                        business = '업체'
+                        b_con = False
+                    if not bool(re.search(r'업체$', business)):
+                        if b_con ==False:
+                            business = business + ' 업체'
                         else:
-                            temp_jongsung = jongsung(business, '와과')
-                        opCorpNm_sentence = '{}{} '.format(opCorpNm, temp_jongsung)
+                            business = business + ' 관련 업체'
+                    opCorpNm = "{} {}({})".format(nation, business, opCorpNm)
+
+                if business == None:
+                    temp_jongsung = jongsung(opCorpNm, '와과')
+                else:
+                    temp_jongsung = jongsung(business, '와과')
+                opCorpNm_sentence = '{}{} '.format(opCorpNm, temp_jongsung)
 
 
-                    naeYong =  f[f.index('판매ㆍ공급계약 내용')+1].strip()
-                    if not bool(re.search(r'계약$',naeYong)):
-                        naeYong = naeYong + ' 계약'
+            naeYong =  f[f.index('판매ㆍ공급계약 내용')+1].strip()
+            if not bool(re.search(r'계약$',naeYong)):
+                naeYong = naeYong + ' 계약'
 
-                    today = date.today().day
+            today = date.today().day
 
-                    gye_gigan = ""
-                    try:
-                        gs_0 = pandas.to_datetime(f[f.index('시작일')+1], format= '%Y-%m-%d')
-                        gs_1 = pandas.to_datetime(f[f.index('종료일')+1], format= '%Y-%m-%d')
-                        if (gs_0 != '-') & (gs_1 != '-'):
-                            gyeStart = "{}년 {}월{}일".format(gs_0.year, gs_0.month, gs_0.day)
-                            gyeEnd = "{}년 {}월{}일".format(gs_1.year, gs_1.month, gs_1.day)
-                            gye_gigan = " 계약기간은 {}부터 {}까지다.".format(gyeStart, gyeEnd)
-                    except:
-                        pass
+            gye_gigan = ""
+            try:
+                gs_0 = pandas.to_datetime(f[f.index('시작일')+1], format= '%Y-%m-%d')
+                gs_1 = pandas.to_datetime(f[f.index('종료일')+1], format= '%Y-%m-%d')
+                if (gs_0 != '-') & (gs_1 != '-'):
+                    gyeStart = "{}년 {}월{}일".format(gs_0.year, gs_0.month, gs_0.day)
+                    gyeEnd = "{}년 {}월{}일".format(gs_1.year, gs_1.month, gs_1.day)
+                    gye_gigan = " 계약기간은 {}부터 {}까지다.".format(gyeStart, gyeEnd)
+            except:
+                pass
 
 
-                    title='{}, {}원 규모 공급계약 체결...매출액 대비 {}%'.format(corpNm, banolim(tot,'원','억'), math.floor(float(machulRate)))
-                    article = """
+            title='{}, {}원 규모 공급계약 체결...매출액 대비 {}%'.format(corpNm, banolim(tot,'원','억'), math.floor(float(machulRate)))
+            article = """
                     {}{} {}{}원 규모의 {}을 체결했다고 {}일 공시했다. 계약금액은 최근 매출액 대비 {}% 수준이다.{}
                     """.format(corpNm, jongsung(corpNm, '은는'), opCorpNm_sentence, banolim(tot,'원','만'), naeYong,
                                today,machulRate, gye_gigan)
 
-                    if f[f.index('공시유보 관련내용')+2] not in ['-', '0']:
-                        gh_0 =pandas.to_datetime(f[f.index('유보기한')+1], format= '%Y-%m-%d')
-                        gihan = "{}년 {}월{}일".format(gh_0.year, gh_0.month, gh_0.day)
-                        sayu = f[f.index('유보사유')+1]
+            if f[f.index('공시유보 관련내용')+2] not in ['-', '0']:
+                gh_0 =pandas.to_datetime(f[f.index('유보기한')+1], format= '%Y-%m-%d')
+                gihan = "{}년 {}월{}일".format(gh_0.year, gh_0.month, gh_0.day)
+                sayu = f[f.index('유보사유')+1]
 
-                        yubo_article = """
+                yubo_article = """
                         {}{} {}까지 공시 유보된다.
                         """.format(sayu, jongsung(sayu, '으로'), gihan)
-                        article = article + yubo_article
+                article = article + yubo_article
 
-                return {'title':title, 'article':article, 'table': '종료일'}
-            raise Exception("총액 적거나 매출비율 적어서")
-        raise Exception("양식 달라서") #이건 없어도 될듯
 
     elif '판매ㆍ공급계약 구분' in f:
         if f[f.index('판매ㆍ공급계약 구분')+1] == '공사수주':
+            force = True
+
             opCorpNm = f[f.index('계약상대')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
             naeYong =  f[f.index('- 체결계약명')+1].strip()
             naeYong = re.sub(r'계약$', '', naeYong)
@@ -376,96 +375,110 @@ def danil(f=None, crpNm=None, sou_html=None, **kwargs):
             title = "{}, {}원 규모 {}공사 수주".format(crpNm, banolim(tot, '원', '억'), title_content)
             article = """
             {}{} {}{} '{}' 수주계약을 체결했다고 {}일 공시했다. 계약금액은 {}원 규모이며, 이는 최근 매출액 대비 {}%다.{} 공급지역은 {}{}.
-            """.format(crpNm, jongsung(crpNm, '은는'), opCorpNm, jongsung(opCorpNm, '와과'), naeYong, today, banolim(tot,
-                                                                                                                 '원',
-                                                                                                                 '만'), machulRate, gye_gigan, nation, jongsung(nation,'이다'))
-            return {'title':title, 'article':article, 'table': '종료일'}
+            """.format(crpNm, jongsung(crpNm, '은는'), opCorpNm, jongsung(opCorpNm, '와과'), naeYong, today, banolim(tot,'원','만'), machulRate, gye_gigan, nation, jongsung(nation,'이다'))
 
         else:
 
             tot = f[f.index('계약금액(원)')+1]
             machulRate =  f[fs.index('매출액대비(%)')+1]
-            if True in [float(machulRate) > 10]:
-                if True in [float(tot) > 5000000000, float(machulRate) >= 100]:
-                    opCorpNm = f[f.index('계약상대')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
-                    opCorpNm_sentence = ''
-                    if opCorpNm == '-':
-                        opCorpNm_sentence = ''
 
+            opCorpNm = f[f.index('계약상대')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
+            opCorpNm_sentence = ''
+            title_jaebeol = ''
+            #계약상대 가 없을 경우
+            if opCorpNm == '-':
+                opCorpNm_sentence = ''
+            #계약상대가 있는 경우
+            else:
+                #
+                business=None
+                #계약상대 이름이 모두 영어인 경우, 삼성,현대,LG면 그걸 앞으로 빼고, 아니면 공급지역으로 유추.
+                if not bool(re.search(r'[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]', opCorpNm)):
+                    if bool(re.search(r'samsung',opCorpNm.lower())):
+                        opCorpNm_sentence = '삼성({})과 '.format(opCorpNm)
+                        title_jaebeol = '삼성에 '
+                    elif bool(re.search(r'LG',opCorpNm)):
+                        opCorpNm_sentence = 'LG({})와 '.format(opCorpNm)
+                        title_jaebeol = 'LG에 '
+                    elif bool(re.search(r'hyundai',opCorpNm.lower())):
+                        opCorpNm_sentence = '현대({})와 '.format(opCorpNm)
+                        title_jaebeol = '현대에 '
                     else:
-                        business=None
-                        if not bool(re.search(r'[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]', opCorpNm)):
-                            if bool(re.search(r'samsung',opCorpNm.lower())):
-                                opCorpNm_sentence = '삼성({})과 '.format(opCorpNm)
-                                title_jaebeol = '삼성에 '
-                            elif bool(re.search(r'LG',opCorpNm)):
-                                opCorpNm_sentence = 'LG({})와 '.format(opCorpNm)
-                                title_jaebeol = 'LG에 '
-                            elif bool(re.search(r'hyundai',opCorpNm.lower())):
-                                opCorpNm_sentence = '현대({})와 '.format(opCorpNm)
-                                title_jaebeol = '현대에 '
+                        nation = f[f.index('판매ㆍ공급지역')+1]
+                        try:
+                            business=  f[f.index('-주요사업')+1]
+                        except:
+                            business = '-'
+                        b_con = True
+                        if business == '-':
+                            business = '업체'
+                            b_con = False
+                        if not bool(re.search(r'업체$', business)):
+                            if b_con ==False:
+                                business = business + ' 업체'
                             else:
-                                nation = f[f.index('판매ㆍ공급지역')+1]
-                                try:
-                                    business=  f[f.index('-주요사업')+1]
-                                except:
-                                    business = '-'
-                                b_con = True
-                                if business == '-':
-                                    business = '업체'
-                                    b_con = False
-                                if not bool(re.search(r'업체$', business)):
-                                    if b_con ==False:
-                                        business = business + ' 업체'
-                                    else:
-                                        business = business + ' 관련 업체'
-                                opCorpNm = "{} {}({})".format(nation, business, opCorpNm)
+                                business = business + ' 관련 업체'
+                        opCorpNm = "{} {}({})".format(nation, business, opCorpNm)
 
-                                if business == None:
-                                    temp_jongsung = jongsung(opCorpNm, '와과')
-                                else:
-                                    temp_jongsung = jongsung(business, '와과')
-                                opCorpNm_sentence = '{}{} '.format(opCorpNm, temp_jongsung)
+                if business == None:
+                    temp_jongsung = jongsung(opCorpNm, '와과')
+                else:
+                    temp_jongsung = jongsung(business, '와과')
+                opCorpNm_sentence = '{}{} '.format(opCorpNm, temp_jongsung)
 
 
-                    naeYong =  f[f.index('- 체결계약명')+1].strip()
-                    if not bool(re.search(r'[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]', naeYong)):
-                        naeYong = ''
-                    else:
-                        naeYong = re.sub(r'계약$', '', naeYong) + ' '
+            naeYong =  f[f.index('- 체결계약명')+1].strip()
+            if not bool(re.search(r'[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]', naeYong)):
+                naeYong = ''
+            else:
+                naeYong = re.sub(r'계약$', '', naeYong) + ' '
 
 
-                    gye_gigan = ""
-                    try:
-                        gs_0 = pandas.to_datetime(f[f.index('시작일')+1], format= '%Y-%m-%d')
-                        gs_1 = pandas.to_datetime(f[f.index('종료일')+1], format= '%Y-%m-%d')
-                        if (gs_0 != '-') & (gs_1 != '-'):
-                            gyeStart = "{}년 {}월{}일".format(gs_0.year, gs_0.month, gs_0.day)
-                            gyeEnd = "{}년 {}월{}일".format(gs_1.year, gs_1.month, gs_1.day)
-                            gye_gigan = " 계약기간은 {}부터 {}까지다.".format(gyeStart, gyeEnd)
-                    except:
-                        pass
+            gye_gigan = ""
+            try:
+                gs_0 = pandas.to_datetime(f[f.index('시작일')+1], format= '%Y-%m-%d')
+                gs_1 = pandas.to_datetime(f[f.index('종료일')+1], format= '%Y-%m-%d')
+                if (gs_0 != '-') & (gs_1 != '-'):
+                    gyeStart = "{}년 {}월{}일".format(gs_0.year, gs_0.month, gs_0.day)
+                    gyeEnd = "{}년 {}월{}일".format(gs_1.year, gs_1.month, gs_1.day)
+                    gye_gigan = " 계약기간은 {}부터 {}까지다.".format(gyeStart, gyeEnd)
+            except:
+                pass
 
-                    jogun = ''
-                    if '주요 계약조건' in f:
-                        jo = f[f.index('주요 계약조건')+1]
-                        if jo not in ['-', '']:
-                            jogun = " 주요 계약조건은 '{}'{}.".format(jo, jongsung(jo, '이다'))
+            jogun = ''
+            if '주요 계약조건' in f:
+                jo = f[f.index('주요 계약조건')+1]
+                if jo not in ['-', '']:
+                    jogun = " 주요 계약조건은 '{}'{}.".format(jo, jongsung(jo, '이다'))
 
-                    title = "{}, {}{}원 공급계약...매출액 대비 {}%".format(crpNm, title_jaebeol, banolim(tot,'원','억'), machulRate)
-                    article = """
+            title = "{}, {}{}원 공급계약...매출액 대비 {}%".format(crpNm, title_jaebeol, banolim(tot,'원','억'), machulRate)
+            article = """
                     {}{} {}{}원 규모의 {}공급계약을 체결했다고 {}일 공시했다. 이는 최근 매출 대비 {}에 해당하는 규모다.{}
                     """.format(crpNm, jongsung(crpNm, '은는'), opCorpNm_sentence, banolim(tot, '원', '만'), naeYong, today,
                                machulRate, gye_gigan)
+            article = article + jogun
 
-                    article = article + jogun
-                    return {'title':title, 'article':article, 'table': '종료일'}
-                else:
-                    raise Exception("50억 미만이거나 100% 미만")
-            else:
-                raise Exception("매출액대비 10% 미만")
+
+    #### 필터구간 ####
+    if not force: #디폴트는 False. 위에서 '공사수주'일 경우 True.
+        if (stock_code in kos_list()['all_num']):
+            force = True
+    if not force:
+        if True in [float(machulRate) > 10]:
+            if True in [float(tot) > 5000000000, float(machulRate) >= 100]:
+                force = True
+
+    if not force:
+        for i in f:
+            if bool(re.search(r'코로나|covid|폐질환|삼성|현대|이재명|samsung|엘지|hyundai|문재인',i.lower())):
+                force = True
+                break
+    if force:
+        return {'title':title, 'article':article, 'table': '종료일'}
+    else:
+        raise Exception("필터에서 걸러짐")
 dict_can['단일판매ㆍ공급계약체결']=danil
-
+dict_can['단일판매ㆍ공급계약체결(자율공시)']=danil
 
 #최대주주등소유주식변동신고서
 def juju_byun(f=None, crpNm=None, sou_html=None, stock_code= None, **kwargs):

@@ -13,8 +13,8 @@ def kos_list():
     today = date.today().strftime('%Y%m%d')
     url = 'http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd'
     result_dict = {}
-    all_name = []
-    all_num = []
+    result_dict['all_name'] = []
+    result_dict['all_num'] = []
     #이 펑션이 두번 반복됨. 파일 검색, 없으면 만들고 있으면 가져와 result_dict를 채움.
     def make_and_get(kowhat):
         filename = kowhat+str(tomonth)+'.csv'
@@ -49,7 +49,7 @@ def kos_list():
                 dicts = dicts['output']
                 for i in dicts:
                     try:
-                        f.writelines([i['ISU_SRT_CD'],',',i['ISU_ABBRV'], '\n'])
+                        f.writelines([i['ISU_ABBRV'],',',i['ISU_SRT_CD'], '\n'])
                     except:
                         pass
                 time.sleep(3)
@@ -61,9 +61,9 @@ def kos_list():
                 for i in result:
                     i = i.split(',')
                     name_list.append(i[0])
-                    all_name.append(i[0])
                     num_list.append(i[1].strip())
-                    all_num.append(i[1].strip())
+                    result_dict['all_name'].append(i[0])
+                    result_dict['all_num'].append(i[1].strip())
 
         except:
             list = glob.glob(f'data_share/{kowhat}/*')
@@ -76,8 +76,9 @@ def kos_list():
                     i = i.split(',')
                     name_list.append(i[0])
                     num_list.append(i[1].strip())
-                    all_name.append(i[0])
-                    all_num.append(i[1].strip())
+                    result_dict['all_name'].append(i[0])
+                    result_dict['all_num'].append(i[1].strip())
+
         result_dict[f'{kowhat}_name'] = name_list
         result_dict[f'{kowhat}_num'] = num_list
         return None

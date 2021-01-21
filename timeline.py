@@ -49,13 +49,13 @@ def process(cycle):
             # report_nm_raw 는 원래 제목 그대로
             # report_nm 은 특수경우 괄호내용을 떼고 일반화한것.
 
-
+            cmd = ''
             #괄호 떼고 일반화. 여기서 report_nm과 report_nm_raw가 달라짐.
-            if bool(re.search(r'조회공시요구' and r'답변', report_nm)):  #조회공시요구에대한답변 보고서일 경우
-                cmd = re.findall(r'(?<=\()[^\(\)]+(?=\))', report_nm)
-                report_nm = re.sub(r'\([^\(\)]+\)', '', report_nm)  # 괄호 안에 있는걸 지워버림
-            else:
-                cmd = ''
+            # if bool(re.search(r'조회공시요구' and r'답변', report_nm)):  #조회공시요구에대한답변 보고서일 경우
+            #     cmd = re.findall(r'(?<=\()[^\(\)]+(?=\))', report_nm)
+            #     report_nm = re.sub(r'\([^\(\)]+\)', '', report_nm)  # 괄호 안에 있는걸 지워버림
+            # else:
+            #     cmd = ''
 
             if report_nm in list_can:  # 처리가능 보고서 목록과 비교.
                 rcept_no = watch_list.iloc[i]['rcept_no']
