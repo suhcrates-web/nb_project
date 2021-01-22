@@ -1,5 +1,5 @@
 import requests
-from datetime import date
+from datetime import date, timedelta
 import time, re
 from bs4 import BeautifulSoup
 import os, glob, json
@@ -11,13 +11,20 @@ import os, glob, json
 def kos_list():
     tomonth = date.today().strftime('%Y%m')
     today = date.today().strftime('%Y%m%d')
+    w1_ago =  (date.today() - timedelta(days=7)).strftime('%Y%m%d')
     url = 'http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd'
     result_dict = {}
     result_dict['all_name'] = []
     result_dict['all_num'] = []
     #이 펑션이 두번 반복됨. 파일 검색, 없으면 만들고 있으면 가져와 result_dict를 채움.
+
+    glob_temp_nums = [] # maek_and_get 세번 반복하는 과정에서 중복 등록 방지 위함.
     def make_and_get(kowhat):
-        filename = kowhat+str(tomonth)+'.csv'
+
+        if kowhat in ['byeondong_wanhwa']:
+            filename = kowhat+str(today)+'.csv'
+        else:
+            filename = kowhat+str(tomonth)+'.csv'
         if not os.path.isfile(f'data_share/{kowhat}/'+ filename):
             with open(f'data_share/{kowhat}/'+ filename,'w') as f:
                 if kowhat == 'kospi':
@@ -44,14 +51,42 @@ def kos_list():
                         'money': '3',
                         'csvxls_isNo': 'false'
                     }
+                elif kowhat== 'byeondong_wanhwa': #변동성완화장치 발동종목 현황
+                    q_data = {
+                        'bld': 'dbms/MDC/STAT/issue/MDCSTAT22401',
+                        'mktId': 'ALL',
+                        'inqTpCd1': '01',
+                        'viKindCd': 'ALL',
+                        'tboxisuCd_finder_stkisu1_2': '전체',
+                        'isuCd': 'ALL',
+                        'isuCd2': 'ALL',
+                        'codeNmisuCd_finder_stkisu1_2':'',
+                        'param1isuCd_finder_stkisu1_2': 'ALL',
+                        'strtDd': str(w1_ago),
+                        'endDd': str(today),
+                        'csvxls_isNo': 'true'
+                    }
                 result = requests.post(url, q_data)
                 dicts = json.loads(result.content.decode(encoding='utf-8'))
                 dicts = dicts['output']
-                for i in dicts:
-                    try:
-                        f.writelines([i['ISU_ABBRV'],',',i['ISU_SRT_CD'], '\n'])
-                    except:
-                        pass
+                if kowhat in ['byeondong_wanhwa' ]:
+                    temp_nums = []
+                    for i in dicts:
+                        temp_num = i['ISU_NM']
+                        if not temp_num in temp_nums:
+                            temp_nums.append(temp_num)
+                            try:
+                                f.writelines([i['ISU_NM'],',',i['ISU_CD'], '\n'])
+                            except:
+                                pass
+                        else:
+                            pass
+                else:
+                    for i in dicts:
+                        try:
+                            f.writelines([i['ISU_ABBRV'],',',i['ISU_SRT_CD'], '\n'])
+                        except:
+                            pass
                 time.sleep(3)
         try:
             with open(f'data_share/{kowhat}/'+ filename) as f:
@@ -60,10 +95,15 @@ def kos_list():
                 result = f.readlines()
                 for i in result:
                     i = i.split(',')
-                    name_list.append(i[0])
-                    num_list.append(i[1].strip())
-                    result_dict['all_name'].append(i[0])
-                    result_dict['all_num'].append(i[1].strip())
+                    temp_num = i[1]
+                    if not temp_num in glob_temp_nums:
+                        glob_temp_nums.append(temp_num)
+                        name_list.append(i[0])
+                        num_list.append(i[1].strip())
+                        result_dict['all_name'].append(i[0])
+                        result_dict['all_num'].append(i[1].strip())
+                    else:
+                        pass
 
         except:
             list = glob.glob(f'data_share/{kowhat}/*')
@@ -74,10 +114,15 @@ def kos_list():
                 result = f.readlines()
                 for i in result:
                     i = i.split(',')
-                    name_list.append(i[0])
-                    num_list.append(i[1].strip())
-                    result_dict['all_name'].append(i[0])
-                    result_dict['all_num'].append(i[1].strip())
+                    temp_num = i[1]
+                    if not temp_num in glob_temp_nums:
+                        glob_temp_nums.append(temp_num)
+                        name_list.append(i[0])
+                        num_list.append(i[1].strip())
+                        result_dict['all_name'].append(i[0])
+                        result_dict['all_num'].append(i[1].strip())
+                    else:
+                        pass
 
         result_dict[f'{kowhat}_name'] = name_list
         result_dict[f'{kowhat}_num'] = num_list
@@ -85,6 +130,7 @@ def kos_list():
 
     make_and_get('kospi')
     make_and_get('kosdaq')
+    make_and_get('byeondong_wanhwa')
     return result_dict
 
 #

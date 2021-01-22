@@ -23,10 +23,14 @@ if __name__ == "__main__":  #rcpNo_to_table 에서 만든 test.txt 파일 가져
 
 
 #'타법인 주식 및 출자증권 처분결정'
-def otherCorp(f=None, crpNm=None, sou_html=None, **kwargs):
-    if f[f.index('회사와 관계')+1] in ['자회사', '계열회사', '관계회사', '관계기업']:  #회사와의 관계가 자회사라면
+def otherCorp(f=None, fs=None, crpNm=None, sou_html=None, **kwargs):
+    try:
+        relation = f[fs.index('회사와관계')+1]
+    except:
+        relation = f[fs.index('회사와의관계')+1]
+    if relation in ['자회사', '계열회사', '관계회사', '관계기업']:  #회사와의 관계가 자회사라면
         corpNm = crpNm
-        relation = f[f.index('회사와 관계')+1]
+
         purpose = f[f.index('처분목적')+1]
         try:
             opCorpNm = f[f.index('회사명(국적)')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
@@ -247,7 +251,7 @@ dict_can['주요사항보고서(유상증자결정)']=a_yuJeung
 
 
 #단일판매ㆍ공급계약체결
-def danil(f=None, crpNm=None, stock_code = None, sou_html=None, **kwargs):
+def danil(f=None, fs=None, crpNm=None, stock_code = None, sou_html=None, **kwargs):
     fs = []
     force = False
     machulRate = ''
@@ -314,15 +318,16 @@ def danil(f=None, crpNm=None, stock_code = None, sou_html=None, **kwargs):
                     """.format(corpNm, jongsung(corpNm, '은는'), opCorpNm_sentence, banolim(tot,'원','만'), naeYong,
                                today,machulRate, gye_gigan)
 
-            if f[f.index('공시유보 관련내용')+2] not in ['-', '0']:
-                gh_0 =pandas.to_datetime(f[f.index('유보기한')+1], format= '%Y-%m-%d')
-                gihan = "{}년 {}월{}일".format(gh_0.year, gh_0.month, gh_0.day)
-                sayu = f[f.index('유보사유')+1]
+            if '공시유보 관련내용' in f:
+                if f[f.index('공시유보 관련내용')+2] not in ['-', '0']:
+                    gh_0 =pandas.to_datetime(f[f.index('유보기한')+1], format= '%Y-%m-%d')
+                    gihan = "{}년 {}월{}일".format(gh_0.year, gh_0.month, gh_0.day)
+                    sayu = f[f.index('유보사유')+1]
 
-                yubo_article = """
-                        {}{} {}까지 공시 유보된다.
-                        """.format(sayu, jongsung(sayu, '으로'), gihan)
-                article = article + yubo_article
+                    yubo_article = """
+                            {}{} {}까지 공시 유보된다.
+                            """.format(sayu, jongsung(sayu, '으로'), gihan)
+                    article = article + yubo_article
 
 
     elif '판매ㆍ공급계약 구분' in f:
@@ -330,7 +335,11 @@ def danil(f=None, crpNm=None, stock_code = None, sou_html=None, **kwargs):
             force = True
 
             opCorpNm = f[f.index('계약상대')+1].replace('주식회사','').replace('(주)','').replace('㈜','').strip()
-            naeYong =  f[f.index('- 체결계약명')+1].strip()
+
+            try:
+                naeYong =  f[fs.index('-체결계약명')+1].strip()
+            except:
+                naeYong =  f[fs.index('-세부내용')+1].strip()
             naeYong = re.sub(r'계약$', '', naeYong)
             tot = f[f.index('계약금액(원)')+1]
             machulRate =  f[fs.index('매출액대비(%)')+1]
