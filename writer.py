@@ -66,13 +66,15 @@ def writer(rcept_no = None, stock_code = None):
     # 안깨짐.
     # post.do(title=title, article=article,  op ='new_article')  #기사 올리기.
     post.do_temp(title=title, article=article,  op ='None', info=info)
+    post.do_mbot(title=title, article=article,  op ='set_disc', rcept_no=rcept_no, ori_url=url0, corp_name= crpNm,
+                 stock_code = stock_code)
     return {"title":title, "info":info}
 
 if __name__ == '__main__':
     # print(todo_list)
     # print(todo_list)
     #
-    writer(20210122900075)
+    writer(20210202800253, 111)
     #
     # for i in todo_list:
     #     try:

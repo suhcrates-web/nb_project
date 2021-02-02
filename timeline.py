@@ -48,6 +48,7 @@ def process(cycle):
             report_nm_raw = report_nm
             # report_nm_raw 는 원래 제목 그대로
             # report_nm 은 특수경우 괄호내용을 떼고 일반화한것.
+            rm = watch_list.iloc[i]['rm']
 
             cmd = ''
             #괄호 떼고 일반화. 여기서 report_nm과 report_nm_raw가 달라짐.
@@ -65,6 +66,7 @@ def process(cycle):
                 watch_all_dict[rcept_no]['corp_name'] = corp_name #커맨드
                 watch_all_dict[rcept_no]['stock_code'] = stock_code #커맨드
                 watch_all_dict[rcept_no]['cmd'] = cmd #커맨드
+                #watch_all_dict[rcept_no]['rm'] = rm # 비고. 유코채넥
 
 
     watch_all_list = list(watch_all_dict.keys())

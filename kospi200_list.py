@@ -69,11 +69,11 @@ def kos_list():
                 result = requests.post(url, q_data)
                 dicts = json.loads(result.content.decode(encoding='utf-8'))
                 dicts = dicts['output']
-                if kowhat in ['byeondong_wanhwa' ]:
+                if kowhat in ['byeondong_wanhwa' ]: #변동성완화대상일 경우. 7일치를 비교하므로 중복이 많아
                     temp_nums = []
                     for i in dicts:
                         temp_num = i['ISU_NM']
-                        if not temp_num in temp_nums:
+                        if not temp_num in temp_nums:  #중복된거 걸러주는 장치
                             temp_nums.append(temp_num)
                             try:
                                 f.writelines([i['ISU_NM'],',',i['ISU_CD'], '\n'])
@@ -87,7 +87,7 @@ def kos_list():
                             f.writelines([i['ISU_ABBRV'],',',i['ISU_SRT_CD'], '\n'])
                         except:
                             pass
-                time.sleep(3)
+                time.sleep(3)  # sleep은 해당 파일이 없어서 새로 만들때만 적용됨.
         try:
             with open(f'data_share/{kowhat}/'+ filename) as f:
                 name_list= []

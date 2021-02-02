@@ -33,7 +33,7 @@ def list_watch(i):
     except:
         raise Exception(content['message'])
 
-
+#timeline으로 감
 
 if __name__ == "__main__":
     print(list_watch(1))

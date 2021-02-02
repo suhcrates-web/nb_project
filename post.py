@@ -26,8 +26,35 @@ def do_temp(op=None, title = '제목없음', article = '내용없음', info = '�
         url,
         data = data,)
 
+def do_mbot(op='set_disc', title = '제목없음', article = '내용없음', rcept_no = None, stock_code='111', corp_cls =
+"None", ori_url = "None", article_cotent_type= "8", category_id = "83", corp_name = None):
+    url = 'http://alpha.news1.kr/ajax/article_api.php'
+    today = datetime.today().strftime("%Y%m%d")
+    if op=='set_disc':
+        data = {
+            "access_token" : '7ECEB18CF30C48038076225884432F0D',
+            "cmd" : "disc",
+            "op" : "set_disc",
+            "rcept_no" : rcept_no,
+            "report_nm": title,
+            "kind" : "1",
+            "corp_code": stock_code,
+            "corp_name": corp_name,
+            "corp_cls" : corp_cls,
+            "stock_code" : stock_code,
+            "flr_nm" : "테스트",
+            "rcept_dt" : today,
+            "rm" : " ",
+            "ori_url" : ori_url,
+            "content" : article,
+            "article_cotent_type" : article_cotent_type,
+            "category_id" : category_id
+        }
+        requests.post(
+            url,
+            data = data,)
 
-def do(op='edit_article', title = '제목없음', article = '내용없음'):
+def do(op='edit_article', title = '제목없음', article = '내용없음', rcept_no = None):
     #세션열기
     session_requests = requests.session()
     #로그인정보
@@ -143,6 +170,8 @@ def do(op='edit_article', title = '제목없음', article = '내용없음'):
             'msg': 'OK',
             'status' : '1',
         }
+
+
 
     # data0['contentArea'] = content_n1
     session_requests.post(
