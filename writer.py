@@ -59,7 +59,7 @@ def writer(rcept_no = None, stock_code = None):
     global table
     table1 = table.table(sou_html, gijun)
 
-    article = article + table1 +"<br>※해당 기사는 뉴스1 경제·산업부가 자체 개발한 뉴스봇에 의해 작성됐습니다."
+    article = article + table1 #+"<br>※해당 기사는 뉴스1 경제·산업부가 자체 개발한 뉴스봇에 의해 작성됐습니다."
 
     info = json.dumps({"rcept_no":rcept_no, "bogoNm":bogoNm, "url":url, "url0":url0}, ensure_ascii=False) #ensure_ascii
     # 이렇게 해야 한글

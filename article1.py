@@ -462,7 +462,7 @@ def danil(f=None, fs=None, crpNm=None, stock_code = None, sou_html=None, **kwarg
 
             title = "{}, {}{}원 공급계약...매출액 대비 {}%".format(crpNm, title_jaebeol, banolim(tot,'원','억'), machulRate)
             article = """
-                    {}{} {}{}원 규모의 {}공급계약을 체결했다고 {}일 공시했다. 이는 최근 매출 대비 {}에 해당하는 규모다.{}
+                    {}{} {}{}원 규모의 {}공급계약을 체결했다고 {}일 공시했다. 이는 최근 매출 대비 {}%에 해당하는 규모다.{}
                     """.format(crpNm, jongsung(crpNm, '은는'), opCorpNm_sentence, banolim(tot, '원', '만'), naeYong, today,
                                machulRate, gye_gigan)
             article = article + jogun
