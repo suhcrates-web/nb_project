@@ -42,10 +42,10 @@ def kos_list():
                 elif kowhat== 'kosdaq':
                     q_data = {
                         'bld': 'dbms/MDC/STAT/standard/MDCSTAT00601',
-                        'tboxindIdx_finder_equidx0_0': '코스피 200',
-                        'indIdx': '1',
-                        'indIdx2': '028',
-                        'codeNmindIdx_finder_equidx0_0': '코스피 200',
+                        'tboxindIdx_finder_equidx0_0': '코스닥 150',
+                        'indIdx': '2',
+                        'indIdx2': '203',
+                        'codeNmindIdx_finder_equidx0_0': '코스닥 150',
                         'param1indIdx_finder_equidx0_0': '',
                         'trdDd': str(today),
                         'money': '3',
@@ -179,5 +179,5 @@ def kos_list():
 #                 num_list.append(i[1].strip())
 #     return ({'name_list':name_list, 'num_list':num_list})
 
-# if __name__=="__main__":
-    # print(kospi200()["name_list"])
+if __name__=="__main__":
+    kos_list()
