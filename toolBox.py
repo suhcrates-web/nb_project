@@ -4,6 +4,10 @@ from datetime import datetime, date
 #word : 단어 집어넣음
 #context: 은는, 이가, 을를, 이다, 와과
 
+#집배신에 보내는 목록.
+real_do = ['단일판매ㆍ공급계약체결(자율공시)', '단일판매ㆍ공급계약체결', '연결재무제표기준영업(잠정)실적(공정공시)', '영업(잠정)실적(공정공시)']
+
+
 def jongsung(word, context):
     ja = word[-1] #마지막 글자
     jong = ((ord(ja)-ord('가'))/28)%1

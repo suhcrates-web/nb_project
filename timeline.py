@@ -5,6 +5,8 @@ from datetime import datetime
 import csv, time, re
 import traceback
 from telebot import bot
+from toolBox import real_do
+
 
 
 today = datetime.today().strftime(format='%Y%m%d')
@@ -86,6 +88,7 @@ def process(cycle):
     if todo_list != []:
         list_done = [] #처리된 항목
         title_list = [] #기사제목 리스트임.
+        title_real_list = [] #집배신에 보내는 리스트
         for i in todo_list:
 
             try:
@@ -94,7 +97,12 @@ def process(cycle):
                 title = wrote['title']
                 info = wrote['info'] #recept_no , bogoNm, url  포함.
                 message = 'success' #기록에 남길 메세지
-                title_list.append(title) #텔레그램 보낼 리스트
+                title_list.append(title) #텔레그램 보낼 리스트 (이제 안보냄. 진짜는 title_real_list)
+
+                if watch_all_dict[i]['report_nm_raw'] in real_do:
+                    title_real_list.append(title)
+
+
             except Exception as e :
                 message = 'fail m:'+str(e)
 
@@ -105,12 +113,13 @@ def process(cycle):
             list_done_0.append(watch_all_dict[i]['report_nm_raw'])  #3번 : 보고서 이름
             list_done_0.append(watch_all_dict[i]['corp_name']) # 4번 회사 이름
             list_done.append(list_done_0)
-        if len(title_list) == 0:
-            print("all fail")
-        elif len(title_list) ==1:
-            bot('c' ,title_list[0] +"\n올렸습니다!\n"+"http://testbot.ddns.net:5231/bot_v3")
+        if len(title_real_list) == 0:
+            print("집배신 보낸 거 없음")
+        elif len(title_real_list) ==1:
+            bot('c' ,title_real_list[0] +"\n올렸습니다!\n"+"http://testbot.ddns.net:5231/bot_v3")
         else:
-            bot('c',title_list[0] +"\n 외 "+ str(len(title_list)-1)+"건 올렸습니다!\n"+"http://testbot.ddns.net:5231/bot_v3")
+            bot('c',title_real_list[0] +"\n 외 "+ str(len(title_list)-1)+"건 "
+                                                                      "올렸습니다!\n"+"http://testbot.ddns.net:5231/bot_v3")
 
         #r+는 앞에서부터 덮어씌움.
         with open('data/list_done/'+today+'.csv', 'a+', encoding='utf-8', newline='') as f:
