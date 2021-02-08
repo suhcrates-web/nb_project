@@ -68,18 +68,21 @@ def writer(rcept_no = None, stock_code = None):
     # post.do(title=title, article=article,  op ='new_article')  #기사 올리기.
     post.do_temp(title=title, article=article,  op ='None', info=info)
 
-
-    global real_do
-    if bogoNm in real_do:
-        post.do_mbot(title=title, article=article,  op ='set_disc', rcept_no=rcept_no, ori_url=url0, corp_name= crpNm,
-                 stock_code = stock_code)
+    with open('C:/stamp/port.txt', 'r') as f:
+        port = f.read().split(',')#노트북 5232, 데스크탑 5231
+    port = port[0]
+    if str(port) == '5231':
+        global real_do
+        if bogoNm in real_do:
+            post.do_mbot(title=title, article=article,  op ='set_disc', rcept_no=rcept_no, ori_url=url0, corp_name= crpNm,
+                     stock_code = stock_code)
     return {"title":title, "info":info}
 
 if __name__ == '__main__':
     # print(todo_list)
     # print(todo_list)
     #
-    # writer(20210202800253, 111)
+    writer(20210208900234)
     # print(real_do)
     #
     # for i in todo_list:

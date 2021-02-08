@@ -810,8 +810,10 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
     ##별도재무제표인지 찾기####
     jepyo = ''
+    tit_jepyo = ''
     if yeon_gyeol: #연결인지 확인
         jepyo= ' 연결재무제표'
+        tit_jepyo = '연결 '
     else: #연결 아니면 별도인지 체크
         for i in fs:
             if bool(re.search(r'별도재무제표', i)):
@@ -832,7 +834,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                                                                                                        a) or bool(
                 re.search(r'[1234]\s?[Qq]',a))) and (len(a)<30) ))
         j =0
-        for i in fs:
+        for i in fs: #i는 일부러 안씀. 위에 j=0 보이제.
             if check(fs[j]) and check(fs[j+1]):
                 dang_gi = fs[j]
                 jeon_gi = fs[j+1]
@@ -841,12 +843,13 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
         dang = siljeok_gigan(dang_gi, jeon_gi)['dang'] #당기가 언젠지
         gigan = siljeok_gigan(dang_gi, jeon_gi)['gigan'] #분기인지 월인지
 
+
     #####1차 내용 뽑는 구간#######
     _1cha = {}
 
     #매출액, 당기, 현금액
 
-    key_1cha = ['매출액', '영업이익', '당기순이익']
+    key_1cha = ['영업이익', '매출액' , '당기순이익']
     if yeon_gyeol:
         key_1cha += ['지배기업소유주지분순이익']
 
@@ -864,6 +867,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                     _1cha[i]['d_h'] = '-'
 
 
+    #1차에 내용이 있는지 확인
     bool_1cha = True
     for i in key_1cha:
         if _1cha[i]['d_h'] in ['0', '-']:
@@ -872,6 +876,22 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
             bool_1cha = True
             break
         #하나라도 0, -  아닌게 있으면 True가 되면서 for loop을 멈추고 나옴.
+
+
+    #1차에 '지난해' '누계'수치 있는지 확인. 없으면 '지난해' 아님.
+    #있고 당기가 '4분기'일 경우/ last_year=True , dang_gigan='지난해'
+    for i in key_1cha:
+        if _1cha[i]['n_h'] in ['0', '-']:
+            last_year = False
+        else:
+            if (str(dang) == '4') and (gigan == '분기') and bool_1cha:  #누계값이 있고, 4분기에 해당할 경우. 당기간은 '지난해'. #그리고 1차가
+                # 있어야함. 없으면 걍 대충 당기로 다 해버림.
+                dang_gigan = '지난해'
+                last_year = True
+                break
+            last_year = False
+            dang_gigan = str(dang)+gigan
+
 
     ##text 작성구간##
 
@@ -893,14 +913,44 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                 plma_ment = '전{}대비 {}, '.format(yg_word, data)
             else:
                 plma = '증가' if float(data) >0 else '감소'
-                plma_ment = '전{}대비 {}% {}, '.format(yg_word, data, plma)
+                plma_ment = '전{}대비 {}% {}했다. '.format(yg_word, data, plma)
             return plma_ment
         return '오류'
 
     bool_tit_ind = False  #제목에 넣을 값 뽑기
     bool_tit_plma = False # 제목에 들어갈 증감 뽑기
 
+    #4분기 누계실적이 있을 경우. 이걸 우선적으로 작성.
+    if last_year and bool_1cha:
+        text_1cha += f"{dang_gigan} "
+        for i in key_1cha:
+            n_h = _1cha[i]['n_h']
+            n_y_r = _1cha[i]['n_y_r']
+            if n_h not in ['0', '-']: #값이 있는 경우
+
+                if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
+                    if i =='지배기업소유주지분순이익':
+                        i = '지배기업 소유주지분 순이익'
+                text_1cha += '{}{} {}원으로 '.format(i, jongsung(i, '은는'), banolim(n_h, danwi,danwi))
+
+                if not bool_tit_ind: #아직 안정해졌으면 정해줌
+                    tit_ind = i
+                    tit_d_h = n_h
+                    bool_tit_ind =True
+
+                plma_ment = plma_func(n_y_r, '년')
+
+                if plma_ment == '오류': #d_y_r이 0이나 - 일 경우 '오류'를 내놓음.
+                    raise Exception("'지난해' 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
+
+                text_1cha += plma_ment
+                if not bool_tit_plma:
+                    tit_plma = plma_ment[:-2]
+                    bool_tit_plma = True
+        text_1cha += '<br><br>'
+
     if bool_1cha:
+        text_1cha += f"{dang}{gigan} "
         for i in key_1cha:
             d_h = _1cha[i]['d_h']
             d_y_r = _1cha[i]['d_y_r']
@@ -919,17 +969,17 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
                 plma_ment = plma_func(d_y_r, '년')
 
-                if plma_ment == '오류':
-                    plma_ment = plma_func(d_g_r, '기')
+                if plma_ment == '오류': #d_y_r이 0이나 - 일 경우 '오류'를 내놓음.
+                    plma_ment = plma_func(d_g_r, '기')  # 그럼 전년 이 아닌 전기대비 비율을 대입
                     if plma_ment == '오류':
-                        raise Exception("1차 증감 문장에서 이상 발생")
+                        raise Exception("1차 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
 
                 text_1cha += plma_ment
                 if not bool_tit_plma:
                     tit_plma = plma_ment[:-2]
                     bool_tit_plma = True
 
-        text_1cha = text_1cha[:-2] +'했다.'
+        # text_1cha = text_1cha[:-2] +'했다.'
 
 
     ##2차. 당기순이익 아래로 더 쓸 게 있다면 쓰기.
@@ -1010,8 +1060,8 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
 
     #이마트가 12일 제출한 영업실적 공시에 따르면 이마트의 지난 12월
-    start_text = "{}{} {}일 제출한{} 영업실적 공시에 따르면 {}의 지난 {}{} ".format(
-        crpNm,jongsung(crpNm,'이가') ,today, jepyo, crpNm, str(dang), gigan)
+    start_text = "{}{} {}일 제출한{} 영업실적 공시에 따르면 {}의 ".format(
+        crpNm,jongsung(crpNm,'이가') ,today, jepyo, crpNm, dang_gigan)
 
     if bool_1cha:
         article = start_text + text_1cha
@@ -1023,13 +1073,13 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
     ###제목에 들어갈것들 위에서 만들어져 들어옴.####
     #이마트, 12월 매출 1.3조..전년비 17.5% 증가"
-    title = "{}, {}{} {} {}원...{}".format(
+    title = "{}, {} {}{} {}원...{}".format(
         crpNm,
-        str(dang),
-        gigan,
+        dang_gigan,
+        tit_jepyo,
         tit_ind,
         banolim(tit_d_h, danwi, '억'),
-        tit_plma
+        tit_plma[:-2] # "했다" 지우기.
 
     ).replace('-','').replace('+','')
 

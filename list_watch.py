@@ -24,6 +24,7 @@ def list_watch(i):
     }
     content = requests.get(url, data).content
     content = json.loads(content)
+    # print(content)
 
     # content = content.decode('utf-8')
     # content = content['list'][0]

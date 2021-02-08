@@ -24,120 +24,303 @@ fr = []
 
 print(f)
 
-def juju_byun(f=None, crpNm=None, sou_html=None, stock_code= None, **kwargs):
-    corpNm = crpNm
-    today = date.today().day
-    ####구자영씨 등 최대주주 친인척 6명######
-    #'성명'을 경계로  매도자가 나뉨. 마지막 성명은 '5.주식소유현황' 첫머리.
-    n = 0
-    n_list =[]
-    for i in f:
-        if i == '성명':
-            n_list.append(n)
-        n +=1
-    #개인 리스트
-    gain_list = []
-    for i in range(0, len(n_list)-1):
-        start = n_list[i]
-        end = n_list[i+1]
-        gain_list.append(f[start:end])
+#영업(잠정)실적(공정공시)
+def yg_siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd=None, **kwargs):
+    return siljeok(f=f, fs=fs, crpNm=crpNm, sou_html=sou_html, cmd='yeon')
+def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
-    gain_dict = [] #개인별 정보
-    relate_list = {} #관계별로 묶음
-    for i in gain_list:
-        #gain_dict 작성구간
-        temp = {}
-        temp['성명'] =  i[i.index('성명')+1]
-        temp['관계'] = i[i.index('최대주주 및 발행회사와의 관계')+1]
-        gain_dict.append(temp)
-
-        #relate_list 작성구간
-        if temp['관계'] not in relate_list.keys():
-            relate_list[temp['관계']] =  [temp['성명']]
-        else:
-            relate_list[temp['관계']] =relate_list[temp['관계']] +  [temp['성명']]
-        #예) relate_list = {'친인척': ['구자영', '이재원', '이욱진', '유웅선', '유준선', '유희영']}
-
-    #매도·매수자
-    relate_ment = ''
-    for i in  relate_list.keys():
-        temp_ment=''
-        if i not in ['본인', '기타']:
-            temp_ment = '{} 관계인 '.format(i)
-        list = relate_list[i]
-        if len(list)>1:
-
-            relate_ment += list[0]+' 등 '+ temp_ment + ' 최대주주 ' +  str(len(list))+'명, '
-        else:
-            relate_ment += temp_ment + '최대주주 ' + list[0]+ ', '
-    relate_ment = relate_ment[:-2]
-    #구자영 등 친인척 관계의 최대주주 6명
-
-
-    ####보통주 28만9272주 #######
-    jusic = {}
-
-    if float(f[f.index('증감')+2]) !=0:
-        jusic['보통주'] =  float(f[f.index('증감')+2])  #보통주
-    if float(f[f.index('증감')+5]) != 0:
-        jusic['종류주'] = float(f[f.index('증감')+5]) #종류주
-    if float(f[f.index('증감')+8]) != 0:
-        jusic['증권예탁증권'] = float(f[f.index('증감')+8]) #증권예탁증권
-    jusic_tot = float(f[f.index('증감')+11]) #합계
-    su_do = '매수' if jusic_tot>=0 else '매도'
-
-    jusic_ment = ''
-    if len(jusic.keys()) ==1:   ##################
-        jusic_ment = jusic_ment + [*jusic][0] + ' '+ banolim(abs(jusic[[*jusic][0]]), '원', '일' ) +'주를 ' + su_do
+    if cmd == 'yeon':
+        yeon_gyeol = True
     else:
-        for i in jusic.keys():
-            jusic_ment += i + ' ' + banolim(abs(jusic[i]),'원','일') +'주, '
-        jusic_ment += '총 ' + banolim(abs(jusic_tot),'원','일') + '주를 ' + su_do
-    #보통주 28만9272주를 매도
+        yeon_gyeol = False
+
+    today =date.today().day
+    #영업(잠정)실적(공정공시)
+    j=0
+    for i in fs:
+        if bool(re.search(r'단위', i)):
+
+            break
+        j +=1
+    danwi_kan = fs[j]
+    danwi = re.findall('\w*(?=원)',danwi_kan)[0]
+
+    ##별도재무제표인지 찾기####
+    jepyo = ''
+    tit_jepyo = ''
+    if yeon_gyeol: #연결인지 확인
+        jepyo= ' 연결재무제표'
+        tit_jepyo = '연결 '
+    else: #연결 아니면 별도인지 체크
+        for i in fs:
+            if bool(re.search(r'별도재무제표', i)):
+                jepyo = ' 별도재무제표'
+                break
 
 
-    ####소유주식이 456만5106 보통주에서 455만9951보통주로 5155주 감소####
 
-    #직전 합계
-    jeon = float(f[f.index('직전보고서제출일')+12])
-    hu =  float(f[f.index('이번보고서제출일')+12])
-    cha = hu - jeon   ##
-    plma = '감소' if cha <0 else '증가'
-
-    hap_ment = '소유주식이 {}주에서 {}주로 {}주 {}했다'.format(banolim(jeon,'원','일'), banolim(hu,'원','일'), banolim(abs(cha), '원', '일') ,
-                                                  plma)
-    #소유주식이 456만5106 보통주에서 455만9951보통주로 5155주 감소했다
-
-    ###이번 최대주주 등 소유주식 감소로 최대주주 등이 보유한 전체 지분은 35.11%에서 35.08%로 변동됐다.###
-    jeon_jibun = float(f[f.index('직전보고서제출일')+13])
-    hu_jibun =  float(f[f.index('이번보고서제출일')+13])
-
-    jibum_ment = "이번 소유주식 {}로 최대주주 등이 보유한 전체 지분은 {}%에서 {}%로 변동됐다".format(plma, jeon_jibun, hu_jibun)
-
-
-    title = "{}, {} 등 소유주식 지분 {}% → {}%".format(crpNm, '최대주주', jeon_jibun, hu_jibun)
-    article = """
-    {}{} {}{} {}했다고 {}일 공시했다. <br><br>{} 
-    """.format(crpNm, jongsung(crpNm, '은는'), relate_ment, jongsung(relate_ment, '이가'), jusic_ment, today, jibum_ment)
+    #####기간 뽑는 구간 ######
+    try: #당기실적, 전기실적 아래에 기간표시 있다고 가정. 그것도 없을 경우 인덱스 에러가 나게 돼있음.
+        dang_gi = fs[fs.index('매출액')-3]
+        jeon_gi = fs[fs.index('매출액')-2]
+        dang = siljeok_gigan(dang_gi, jeon_gi)['dang'] #당기가 언젠지
+        gigan = siljeok_gigan(dang_gi, jeon_gi)['gigan'] #분기인지 월인지
+    except IndexError: #	당기실적(20년10월) 이런식으로 당기실적 칸에, 그것도 연결재무제표의 경우 2차 칸에 놓이는 경우가 있음.
+        def check(a):
+            return (bool(re.search(r'\d\s?년',a)) and bool(re.search(r'\d\s?월',a))) or ((bool(re.search(r'[1234]\s?분기',
+                                                                                                       a) or bool(
+                re.search(r'[1234]\s?[Qq]',a))) and (len(a)<30) ))
+        j =0
+        for i in fs: #i는 일부러 안씀. 위에 j=0 보이제.
+            if check(fs[j]) and check(fs[j+1]):
+                dang_gi = fs[j]
+                jeon_gi = fs[j+1]
+                break
+            j +=1
+        dang = siljeok_gigan(dang_gi, jeon_gi)['dang'] #당기가 언젠지
+        gigan = siljeok_gigan(dang_gi, jeon_gi)['gigan'] #분기인지 월인지
 
 
-    ###필터 구간 ####
-    force = False #송고 디폴트값.
+    #####1차 내용 뽑는 구간#######
+    _1cha = {}
+
+    #매출액, 당기, 현금액
+
+    key_1cha = ['영업이익', '매출액' , '당기순이익']
+    if yeon_gyeol:
+        key_1cha += ['지배기업소유주지분순이익']
+
+    for i in key_1cha:
+        _1cha[i]= {}
+        _1cha[i]['d_h']= fs[fs.index(i)+2] #당기, 현금액
+        _1cha[i]['d_y_r']= inc_rate(fs[fs.index(i)+6]) #당기, 전년대비 비율
+        _1cha[i]['d_g_r']= inc_rate(fs[fs.index(i)+4]) #당기, 전기대비 비율
+        _1cha[i]['n_h']= fs[fs.index(i)+8] #누계, 현금액
+        _1cha[i]['n_y_r']= inc_rate(fs[fs.index(i)+12]) #누계, 현금액
+        if yeon_gyeol:
+            #연결재무재표에서 '지배기업소유지~~'가 당기순이익과 똑같은 경우 d_h를 '-'로 맞추면 기사쓸때 배제됨.
+            if i == '지배기업소유주지분순이익':
+                if _1cha[i]['d_h'] ==_1cha['당기순이익']['d_h'] and _1cha[i]['d_y_r'] ==_1cha['당기순이익']['d_y_r']:
+                    _1cha[i]['d_h'] = '-'
 
 
-    #코스피 200 안에 들거나,  지분 전후차이가 1이 넘거나
+    #1차에 내용이 있는지 확인
+    bool_1cha = True
+    for i in key_1cha:
+        if _1cha[i]['d_h'] in ['0', '-']:
+            bool_1cha = False
+        else:
+            bool_1cha = True
+            break
+        #하나라도 0, -  아닌게 있으면 True가 되면서 for loop을 멈추고 나옴.
 
-    if (stock_code in kos_list()['all_num']) or \
-            (abs(float(jeon_jibun) - float(hu_jibun))>1) :
-        force = True
+
+    #1차에 '지난해' '누계'수치 있는지 확인. 없으면 '지난해' 아님.
+    #있고 당기가 '4분기'일 경우/ last_year=True , dang_gigan='지난해'
+    for i in key_1cha:
+        if _1cha[i]['n_h'] in ['0', '-']:
+            last_year = False
+        else:
+            if (str(dang) == '4') and (gigan == '분기') and bool_1cha:  #누계값이 있고, 4분기에 해당할 경우. 당기간은 '지난해'. #그리고 1차가
+                # 있어야함. 없으면 걍 대충 당기로 다 해버림.
+                dang_gigan = '지난해'
+                last_year = True
+                break
+            last_year = False
+            dang_gigan = str(dang)+gigan
 
 
-    if force:
-        return {'title':title, 'article':article, 'table':['보고일자','증감']}
+    ##text 작성구간##
+
+
+    ###1차 (매출액, 영업이익, 당기순이익) 작성구간
+    text_1cha = ''
+    #이마트가 14일 공시한 바에 따르면 지난 {12}{월} 동안
+    # 매출액은 1조3230억원으로 전년대비 17.5% 증가,
+
+    #전' '대비 {   }, / '흑자전환', '~~프로 증가'
+    #전년비 증가율 있을 경우 하고, 없으면 전기대비로 함. // '흑자전환' 멘트 있을 경우 넣고, 숫자면 숫자로 채워줌.
+    def plma_func(data, yg_word):
+        if data not in ['0', '-','']:
+            # if data == d_y_r:
+            #     yg_word = '년' #전'년'대비
+            # elif data == d_g_r:
+            #     yg_word = '기'
+            if bool(re.search('전환', data)):
+                plma_ment = '전{}대비 {}, '.format(yg_word, data)
+            else:
+                plma = '증가' if float(data) >0 else '감소'
+                plma_ment = '전{}대비 {}% {}했다. '.format(yg_word, data, plma)
+            return plma_ment
+        return '오류'
+
+    bool_tit_ind = False  #제목에 넣을 값 뽑기
+    bool_tit_plma = False # 제목에 들어갈 증감 뽑기
+
+    #4분기 누계실적이 있을 경우. 이걸 우선적으로 작성.
+    if last_year and bool_1cha:
+        text_1cha += f"{dang_gigan} "
+        for i in key_1cha:
+            n_h = _1cha[i]['n_h']
+            n_y_r = _1cha[i]['n_y_r']
+            if n_h not in ['0', '-']: #값이 있는 경우
+
+                if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
+                    if i =='지배기업소유주지분순이익':
+                        i = '지배기업 소유주지분 순이익'
+                text_1cha += '{}{} {}원으로 '.format(i, jongsung(i, '은는'), banolim(n_h, danwi,danwi))
+
+                if not bool_tit_ind: #아직 안정해졌으면 정해줌
+                    tit_ind = i
+                    tit_d_h = n_h
+                    bool_tit_ind =True
+
+                plma_ment = plma_func(n_y_r, '년')
+
+                if plma_ment == '오류': #d_y_r이 0이나 - 일 경우 '오류'를 내놓음.
+                    raise Exception("'지난해' 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
+
+                text_1cha += plma_ment
+                if not bool_tit_plma:
+                    tit_plma = plma_ment[:-2]
+                    bool_tit_plma = True
+        text_1cha += '<br><br>'
+
+    if bool_1cha:
+        text_1cha += f"{dang}{gigan} "
+        for i in key_1cha:
+            d_h = _1cha[i]['d_h']
+            d_y_r = _1cha[i]['d_y_r']
+            d_g_r = _1cha[i]['d_g_r']
+            if d_h not in ['0', '-']: #값이 있는 경우
+
+                if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
+                    if i =='지배기업소유주지분순이익':
+                        i = '지배기업 소유주지분 순이익'
+                text_1cha += '{}{} {}원으로 '.format(i, jongsung(i, '은는'), banolim(d_h, danwi,danwi))
+
+                if not bool_tit_ind: #아직 안정해졌으면 정해줌
+                    tit_ind = i
+                    tit_d_h = d_h
+                    bool_tit_ind =True
+
+                plma_ment = plma_func(d_y_r, '년')
+
+                if plma_ment == '오류': #d_y_r이 0이나 - 일 경우 '오류'를 내놓음.
+                    plma_ment = plma_func(d_g_r, '기')  # 그럼 전년 이 아닌 전기대비 비율을 대입
+                    if plma_ment == '오류':
+                        raise Exception("1차 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
+
+                text_1cha += plma_ment
+                if not bool_tit_plma:
+                    tit_plma = plma_ment[:-2]
+                    bool_tit_plma = True
+
+        # text_1cha = text_1cha[:-2] +'했다.'
+
+
+    ##2차. 당기순이익 아래로 더 쓸 게 있다면 쓰기.
+    if yeon_gyeol: # 연결재무제표의 경우 '지배기업소유주지분순이익'을 경계로.  아닌 경우 '당기순이익'을 경계로 함.
+        end = '지배기업소유주지분순이익'
     else:
-        raise Exception("필터에서 걸러짐.")
+        end = '당기순이익'
 
 
+    start_2cha_num = fs.index(end)+13  # 당기순이익 끝 다음칸.
+    n = start_2cha_num
+    bool_2cha = False
+    try: #1차 이후 가장 처음 나타나는 순수한 숫자의  리스트 내 번호를 찾아냄.
+        for i in range(start_2cha_num, len(fs)):
+            i = fs[i]
+            if bool(re.search(r'[0-9]', i)) and not bool(re.search(r'[가-힣|%p]', i)) \
+                    and not bool(re.search(r'-\d+-',i)) \
+                    and not bool(len(re.findall(r'\.',i))>1): #	2021.01.18 이런게 걸리는 오류도 있어 수정.
+                ## 숫자 포함해야함.  한글, 퍼센트기호, -숫자-(전화번호),p 포함하지 않아야함. 이 경우 break하고 n을 하나 깎아서 내놓음.
+                n = n-1 #해당 숫자가 포함된 인덱스여서.
+                break
+            n +=1
+        bool_2cha = True
+        if n == len(fs): #마지막줄까지 간 경우
+            bool_2cha = False
+    except: #조건에 맞는 게 없어서 n이 범위를 넘어가버릴 경우  #이 경우는 사실상 없는듯. for 루프기때문.
+        bool_2cha = False
+    text_2cha=''
+    if bool_2cha:  #2차 텍스트가 참인 경우
+        _2cha = {}
+        n_list = []
+        #2차 구간 수집#
+        end_2cha =False
+        while end_2cha == False:
+            if bool(re.search(r'[0-9]', fs[n+1])) and not bool(re.search(r'[가-힣|%]', fs[n+1])):
+                n_list.append(n)
+                n = n +6
+            else:
+                end_2cha = True
+        #n_list는 이제 각 세부사항들의 인덱스의 번호임.
+
+
+        for i in n_list:
+            name = re.sub(r'[\(\),-]' , '', fs[i]).replace('\xa0','').replace(' ','')
+            if name =='기타':
+                pass
+            else:
+                _2cha[name] = {}
+                _2cha[name]['d_h']= fs[i+1] #당기, 현금액
+                _2cha[name]['d_y_r']= inc_rate(fs[i+5]) #당기, 전년대비 비율
+                _2cha[name]['d_g_r']= inc_rate(fs[i+3]) #당기, 전기대비 비율
+
+        for i in _2cha.keys():
+            d_h = _2cha[i]['d_h']
+            d_y_r = _2cha[i]['d_y_r']
+            d_g_r = _2cha[i]['d_g_r']
+
+            if d_h not in ['0', '-']: #값이 있는 경우
+                text_2cha += '{}{} {}원으로 '.format(i, jongsung(i, '은는'), banolim(d_h, danwi,danwi))
+                if not bool_tit_ind: #아직 안정해졌으면 정해줌
+                    tit_ind = i
+                    tit_d_h = d_h
+                    bool_tit_ind =True
+
+
+                plma_ment = plma_func(d_y_r, '년')
+                if plma_ment == '오류':
+                    plma_ment = plma_func(d_g_r, '기')
+                    if plma_ment == '오류':
+                        raise Exception("2차 증감 문장에서 이상 발생")
+
+                text_2cha += plma_ment
+                if not bool_tit_plma:
+                    tit_plma = plma_ment[:-2]
+                    bool_tit_plma = True
+
+        text_2cha = text_2cha[:-2] +'했다.'
+
+
+    #이마트가 12일 제출한 영업실적 공시에 따르면 이마트의 지난 12월
+    start_text = "{}{} {}일 제출한{} 영업실적 공시에 따르면 {}의 ".format(
+        crpNm,jongsung(crpNm,'이가') ,today, jepyo, crpNm, dang_gigan)
+
+    if bool_1cha:
+        article = start_text + text_1cha
+        if bool_2cha:
+            article +="<br><br>"+text_2cha
+    else:
+        article = start_text + text_2cha
+    article = article.replace('-','').replace('+','')
+
+    ###제목에 들어갈것들 위에서 만들어져 들어옴.####
+    #이마트, 12월 매출 1.3조..전년비 17.5% 증가"
+    title = "{}, {} {}{} {}원...{}".format(
+        crpNm,
+        dang_gigan,
+        tit_jepyo,
+        tit_ind,
+        banolim(tit_d_h, danwi, '억'),
+        tit_plma[:-2] # "했다" 지우기.
+
+    ).replace('-','').replace('+','')
+
+    return {'title':title, 'article':article, 'table': ['실적내용', '정보제공내역', -2]}
 
 end_time = time.time()
 print((end_time-start_time))
@@ -145,7 +328,7 @@ print((end_time-start_time))
 if __name__ == "__main__":
     crpNm= '비비안'
     stockcode = '123'
-    print(juju_byun(f=f, crpNm=crpNm))
+    print(yg_siljeok(f=f, fs=fs, crpNm=crpNm))
     # temp = juju_byun(f=f, crpNm=crpNm)
     # print(temp['title'])
     # print(temp['article'])
