@@ -57,8 +57,6 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                 jepyo = ' 별도재무제표'
                 break
 
-
-
     #####기간 뽑는 구간 ######
     try: #당기실적, 전기실적 아래에 기간표시 있다고 가정. 그것도 없을 경우 인덱스 에러가 나게 돼있음.
         dang_gi = fs[fs.index('매출액')-3]
@@ -117,6 +115,8 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
     #1차에 '지난해' '누계'수치 있는지 확인. 없으면 '지난해' 아님.
     #있고 당기가 '4분기'일 경우/ last_year=True , dang_gigan='지난해'
+
+
     for i in key_1cha:
         if _1cha[i]['n_h'] in ['0', '-']:
             last_year = False
@@ -147,10 +147,10 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
             # elif data == d_g_r:
             #     yg_word = '기'
             if bool(re.search('전환', data)):
-                plma_ment = '전{}대비 {}, '.format(yg_word, data)
+                plma_ment = '전{}대비 {}한'.format(yg_word, data)
             else:
                 plma = '증가' if float(data) >0 else '감소'
-                plma_ment = '전{}대비 {}% {}했다. '.format(yg_word, data, plma)
+                plma_ment = '전{}대비 {}% {}한'.format(yg_word, data.replace('-',''), plma)
             return plma_ment
         return '오류'
 
@@ -159,51 +159,59 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
     #4분기 누계실적이 있을 경우. 이걸 우선적으로 작성.
     if last_year and bool_1cha:
+        first_line = True
         text_1cha += f"{dang_gigan} "
+        n_gak=0 #'각각' 붙이기 위한
         for i in key_1cha:
             n_h = _1cha[i]['n_h']
             n_y_r = _1cha[i]['n_y_r']
             if n_h not in ['0', '-']: #값이 있는 경우
-
+                n_gak+=1
                 if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
                     if i =='지배기업소유주지분순이익':
                         i = '지배기업 소유주지분 순이익'
-                text_1cha += '{}{} {}원으로 '.format(i, jongsung(i, '은는'), banolim(n_h, danwi,danwi))
+
+                plma_ment = plma_func(n_y_r, '년')
+                if plma_ment == '오류': #d_y_r이 0이나 - 일 경우 '오류'를 내놓음.
+                    raise Exception("'지난해' 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
+
+                if first_line:
+                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(n_h,danwi,danwi)}원으로 {plma_ment[:-1]}했다. "
+                    first_line = False
+                else:
+                    text_1cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(n_h,danwi,danwi)}원, "
 
                 if not bool_tit_ind: #아직 안정해졌으면 정해줌
                     tit_ind = i
                     tit_d_h = n_h
                     bool_tit_ind =True
 
-                plma_ment = plma_func(n_y_r, '년')
-
-                if plma_ment == '오류': #d_y_r이 0이나 - 일 경우 '오류'를 내놓음.
-                    raise Exception("'지난해' 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
-
-                text_1cha += plma_ment
                 if not bool_tit_plma:
-                    tit_plma = plma_ment[:-2]
+                    tit_plma = plma_ment[:-1]
                     bool_tit_plma = True
+
+        if n_gak>=3:
+            gak = '각각 '
+        else:
+            gak = ''
+        text_1cha = text_1cha[:-2]+ f'을 {gak}기록했다.'
         text_1cha += '<br><br>'
 
     if bool_1cha:
+        first_line = True
         text_1cha += f"{dang}{gigan} "
+        n_gak=0
         for i in key_1cha:
             d_h = _1cha[i]['d_h']
             d_y_r = _1cha[i]['d_y_r']
             d_g_r = _1cha[i]['d_g_r']
             if d_h not in ['0', '-']: #값이 있는 경우
-
+                n_gak += 1
                 if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
                     if i =='지배기업소유주지분순이익':
                         i = '지배기업 소유주지분 순이익'
-                text_1cha += '{}{} {}원으로 '.format(i, jongsung(i, '은는'), banolim(d_h, danwi,danwi))
 
-                if not bool_tit_ind: #아직 안정해졌으면 정해줌
-                    tit_ind = i
-                    tit_d_h = d_h
-                    bool_tit_ind =True
-
+                #
                 plma_ment = plma_func(d_y_r, '년')
 
                 if plma_ment == '오류': #d_y_r이 0이나 - 일 경우 '오류'를 내놓음.
@@ -211,12 +219,29 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                     if plma_ment == '오류':
                         raise Exception("1차 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
 
-                text_1cha += plma_ment
+
+                if first_line:
+                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(d_h,danwi,danwi)}원으로 {plma_ment[:-1]}했다. "
+                    first_line = False
+                else:
+                    text_1cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
+                # text_1cha = text_1cha[:-2]+'을 각각 기록했다.'
+
+                if not bool_tit_ind: #아직 안정해졌으면 정해줌
+                    tit_ind = i
+                    tit_d_h = d_h
+                    bool_tit_ind =True
+
                 if not bool_tit_plma:
-                    tit_plma = plma_ment[:-2]
+                    tit_plma = plma_ment[:-1]
                     bool_tit_plma = True
 
-        # text_1cha = text_1cha[:-2] +'했다.'
+        if n_gak>=3:
+            gak = '각각 '
+        else:
+            gak = ''
+        text_1cha = text_1cha[:-2]+ f'을 {gak}기록했다.'
+
 
 
     ##2차. 당기순이익 아래로 더 쓸 게 있다면 쓰기.
@@ -268,32 +293,35 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                 _2cha[name]['d_h']= fs[i+1] #당기, 현금액
                 _2cha[name]['d_y_r']= inc_rate(fs[i+5]) #당기, 전년대비 비율
                 _2cha[name]['d_g_r']= inc_rate(fs[i+3]) #당기, 전기대비 비율
-
+        n_gak = 0
         for i in _2cha.keys():
             d_h = _2cha[i]['d_h']
             d_y_r = _2cha[i]['d_y_r']
             d_g_r = _2cha[i]['d_g_r']
 
             if d_h not in ['0', '-']: #값이 있는 경우
-                text_2cha += '{}{} {}원으로 '.format(i, jongsung(i, '은는'), banolim(d_h, danwi,danwi))
-                if not bool_tit_ind: #아직 안정해졌으면 정해줌
-                    tit_ind = i
-                    tit_d_h = d_h
-                    bool_tit_ind =True
-
-
+                n_gak += 1
                 plma_ment = plma_func(d_y_r, '년')
                 if plma_ment == '오류':
                     plma_ment = plma_func(d_g_r, '기')
                     if plma_ment == '오류':
                         raise Exception("2차 증감 문장에서 이상 발생")
 
-                text_2cha += plma_ment
-                if not bool_tit_plma:
-                    tit_plma = plma_ment[:-2]
-                    bool_tit_plma = True
+                text_2cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
+                if n_gak >2:
+                    gak = '각각 '
+                else:
+                    gak = ''
+                text_2cha = text_2cha[:-2]+ f'을 {gak}기록했다.'
+                if not bool_tit_ind: #아직 안정해졌으면 정해줌
+                    tit_ind = i
+                    tit_d_h = d_h
+                    bool_tit_ind =True
 
-        text_2cha = text_2cha[:-2] +'했다.'
+
+                if not bool_tit_plma:
+                    tit_plma = plma_ment[:-1]
+                    bool_tit_plma = True
 
 
     #이마트가 12일 제출한 영업실적 공시에 따르면 이마트의 지난 12월
@@ -306,19 +334,21 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
             article +="<br><br>"+text_2cha
     else:
         article = start_text + text_2cha
-    article = article.replace('-','').replace('+','')
+    article = article.replace('+','')
 
     ###제목에 들어갈것들 위에서 만들어져 들어옴.####
     #이마트, 12월 매출 1.3조..전년비 17.5% 증가"
+
+
     title = "{}, {} {}{} {}원...{}".format(
         crpNm,
         dang_gigan,
         tit_jepyo,
         tit_ind,
         banolim(tit_d_h, danwi, '억'),
-        tit_plma[:-2] # "했다" 지우기.
+        tit_plma
 
-    ).replace('-','').replace('+','')
+    ).replace('+','')
 
     return {'title':title, 'article':article, 'table': ['실적내용', '정보제공내역', -2]}
 
@@ -328,7 +358,9 @@ print((end_time-start_time))
 if __name__ == "__main__":
     crpNm= '비비안'
     stockcode = '123'
-    print(yg_siljeok(f=f, fs=fs, crpNm=crpNm))
+    result = yg_siljeok(f=f, fs=fs, crpNm=crpNm)
+    print(result['title'])
+    print(result['article'])
     # temp = juju_byun(f=f, crpNm=crpNm)
     # print(temp['title'])
     # print(temp['article'])

@@ -8,7 +8,6 @@ b = '원'
 
 # danwi : 원본의 단위  /  gijun : 출력 의 단위
 def banolim(num, danwi='원', gijun ='일', buho='buho'):  #buho  'abs' 절대값으로, 'buho' 부호 포함
-    print(num)
     num = float(num)
 
     if num >=0:

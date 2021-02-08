@@ -27,7 +27,7 @@ def do_temp(op=None, title = '제목없음', article = '내용없음', info = '�
         data = data,)
 
 def do_mbot(op='set_disc', title = '제목없음', article = '내용없음', rcept_no = None, stock_code='111', corp_cls =
-"None", ori_url = "None", article_cotent_type= "8", category_id = "83", corp_name = None):
+"None", ori_url = "None", article_content_type= "8", category_ids = "211", corp_name = None):
     url = 'http://alpha.news1.kr/ajax/article_api.php'
     today = datetime.today().strftime("%Y%m%d")
     if op=='set_disc':
@@ -47,8 +47,8 @@ def do_mbot(op='set_disc', title = '제목없음', article = '내용없음', rce
             "rm" : " ",
             "ori_url" : ori_url,
             "content" : article,
-            "article_cotent_type" : article_cotent_type,
-            "category_id" : category_id
+            "article_content_type" : article_content_type,
+            "category_ids" : category_ids
         }
         requests.post(
             url,

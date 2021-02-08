@@ -181,7 +181,6 @@ def bodo_hm(list_sentences):
                     if j in hm:
                         hm = hm[:hm.index(j)] + jongsung(hm, '이다')
                         break
-        print(hm)
 
         text_bodo_hm = f"""최근의 {tit} 보도와 관련해서는 "{hm}"{jongsung(hm,'했다고')} 밝혔다"""
         return {'result':text_bodo_hm, 'relation':relation}
