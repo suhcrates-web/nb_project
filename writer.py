@@ -50,7 +50,7 @@ def writer(rcept_no = None, stock_code = None):
     # 딕셔너리로.
     #기사작성 함수로부터 나온 3가지 리턴.
     #제목에 배정
-    title = '(테스트)' + temp_artc['title']
+    title = temp_artc['title']
     #기사에 배정
     article = temp_artc['article']
     #테이블 나누는 기준
