@@ -102,6 +102,8 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
             if i == '지배기업소유주지분순이익':
                 if _1cha[i]['d_h'] ==_1cha['당기순이익']['d_h'] and _1cha[i]['d_y_r'] ==_1cha['당기순이익']['d_y_r']:
                     _1cha[i]['d_h'] = '-'
+                if _1cha[i]['n_h'] ==_1cha['당기순이익']['n_h'] and _1cha[i]['n_y_r'] ==_1cha['당기순이익']['n_y_r']:
+                    _1cha[i]['n_h'] = '-'
 
 
     #1차에 내용이 있는지 확인
@@ -194,6 +196,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
                 if first_line:
                     hat = '했'
+                    plma_ment_1 = plma_ment
                     if bool(re.search('축소|확대',plma_ment)):
                         hat ='됐'
                         plma_ment_1 = plma_ment.replace('적자','적자가')
@@ -249,6 +252,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
                 if first_line:
                     hat = '했'
+                    plma_ment_1 = plma_ment
                     if bool(re.search('축소|확대',plma_ment)):
                         hat ='됐'
                         plma_ment_1 = plma_ment.replace('적자','적자가')
