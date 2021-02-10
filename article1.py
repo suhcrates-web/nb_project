@@ -903,17 +903,27 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
     #전' '대비 {   }, / '흑자전환', '~~프로 증가'
     #전년비 증가율 있을 경우 하고, 없으면 전기대비로 함. // '흑자전환' 멘트 있을 경우 넣고, 숫자면 숫자로 채워줌.
-    def plma_func(data, yg_word):
+    def plma_func(data, yg_word, cmd=None):
+        #data : d_y_r 이 들어옴
+        #yg_word : '년' '기'가 들어옴
         if data not in ['0', '-','']:
-            # if data == d_y_r:
-            #     yg_word = '년' #전'년'대비
-            # elif data == d_g_r:
-            #     yg_word = '기'
-            if bool(re.search('전환', data)):
-                plma_ment = '전{}대비 {}한'.format(yg_word, data)
+            han= '한'
+            if cmd == 'sonsil':
+                if data == '적자전환':
+                    pass
+                elif float(data) >0:
+                    data = '적자 축소'
+                    han = '된'
+                elif float(data) <0:
+                    data = '적자 확대'
+                    han = '된'
+
+
+            if bool(re.search('전환', data)) | bool(re.search('적자',data)):
+                plma_ment = '전{}대비 {}{}'.format(yg_word, data, han)
             else:
                 plma = '증가' if float(data) >0 else '감소'
-                plma_ment = '전{}대비 {}% {}한'.format(yg_word, data.replace('-',''), plma)
+                plma_ment = '전{}대비 {}% {}{}'.format(yg_word, data.replace('-',''), plma, han)
             return plma_ment
         return '오류'
 
@@ -933,13 +943,22 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                 if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
                     if i =='지배기업소유주지분순이익':
                         i = '지배기업 소유주지분 순이익'
+                cmd = None
+                #'이익' 이면서 적자일 경우. 이익을 손실로, 숫자 증감 빼고 '적자 전환, 적자 확대, 적자 축소' 로 대체.
+                if bool(re.search('이익',i)) and ( float(n_h) <0):
+                    i = re.sub('이익','손실',i)
+                    cmd = 'sonsil'
 
-                plma_ment = plma_func(n_y_r, '년')
+                plma_ment = plma_func(n_y_r, '년', cmd = cmd)
                 if plma_ment == '오류': #d_y_r이 0이나 - 일 경우 '오류'를 내놓음.
                     raise Exception("'지난해' 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
 
                 if first_line:
-                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(n_h,danwi,danwi)}원으로 {plma_ment[:-1]}했다. "
+                    hat = '했'
+                    if bool(re.search('축소|확대',plma_ment)):
+                        hat ='됐'
+                        plma_ment_1 = plma_ment.replace('적자','적자가')
+                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(n_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
                     first_line = False
                 else:
                     text_1cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(n_h,danwi,danwi)}원, "
@@ -951,6 +970,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
                 if not bool_tit_plma:
                     tit_plma = plma_ment[:-1]
+                    tit_plma = tit_plma.replace('대비','比')
                     bool_tit_plma = True
 
         if n_gak>=3:
@@ -975,7 +995,12 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                         i = '지배기업 소유주지분 순이익'
 
                 #
-                plma_ment = plma_func(d_y_r, '년')
+                cmd = None
+                #'이익' 이면서 적자일 경우. 이익을 손실로, 숫자 증감 빼고 '적자 전환, 적자 확대, 적자 축소' 로 대체.
+                if bool(re.search('이익',i)) and ( float(n_h) <0):
+                    i = re.sub('이익','손실',i)
+                    cmd = 'sonsil'
+                plma_ment = plma_func(d_y_r, '년', cmd=cmd)
 
                 if plma_ment == '오류': #d_y_r이 0이나 - 일 경우 '오류'를 내놓음.
                     plma_ment = plma_func(d_g_r, '기')  # 그럼 전년 이 아닌 전기대비 비율을 대입
@@ -984,7 +1009,11 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
 
                 if first_line:
-                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(d_h,danwi,danwi)}원으로 {plma_ment[:-1]}했다. "
+                    hat = '했'
+                    if bool(re.search('축소|확대',plma_ment)):
+                        hat ='됐'
+                        plma_ment_1 = plma_ment.replace('적자','적자가')
+                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(d_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
                     first_line = False
                 else:
                     text_1cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
@@ -997,6 +1026,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
                 if not bool_tit_plma:
                     tit_plma = plma_ment[:-1]
+                    tit_plma = tit_plma.replace('대비','比')
                     bool_tit_plma = True
 
         if n_gak>=3:
