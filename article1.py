@@ -863,6 +863,8 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
             if i == '지배기업소유주지분순이익':
                 if _1cha[i]['d_h'] ==_1cha['당기순이익']['d_h'] and _1cha[i]['d_y_r'] ==_1cha['당기순이익']['d_y_r']:
                     _1cha[i]['d_h'] = '-'
+                if _1cha[i]['n_h'] ==_1cha['당기순이익']['n_h'] and _1cha[i]['n_y_r'] ==_1cha['당기순이익']['n_y_r']:
+                    _1cha[i]['n_h'] = '-'
 
 
     #1차에 내용이 있는지 확인
@@ -955,6 +957,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
                 if first_line:
                     hat = '했'
+                    plma_ment_1 = plma_ment
                     if bool(re.search('축소|확대',plma_ment)):
                         hat ='됐'
                         plma_ment_1 = plma_ment.replace('적자','적자가')
@@ -997,7 +1000,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                 #
                 cmd = None
                 #'이익' 이면서 적자일 경우. 이익을 손실로, 숫자 증감 빼고 '적자 전환, 적자 확대, 적자 축소' 로 대체.
-                if bool(re.search('이익',i)) and ( float(n_h) <0):
+                if bool(re.search('이익',i)) and ( float(d_h) <0):
                     i = re.sub('이익','손실',i)
                     cmd = 'sonsil'
                 plma_ment = plma_func(d_y_r, '년', cmd=cmd)
@@ -1010,6 +1013,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
                 if first_line:
                     hat = '했'
+                    plma_ment_1 = plma_ment
                     if bool(re.search('축소|확대',plma_ment)):
                         hat ='됐'
                         plma_ment_1 = plma_ment.replace('적자','적자가')
