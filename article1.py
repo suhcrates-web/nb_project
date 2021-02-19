@@ -1122,7 +1122,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
 
     #이마트가 12일 제출한 영업실적 공시에 따르면 이마트의 지난 12월
-    start_text = "{}{} {}일 제출한{} 영업실적 공시에 따르면 {}의 ".format(
+    start_text = "{}{} {}일 제출한{} 영업실적 공시에 따르면 ".format(
         crpNm,jongsung(crpNm,'이가') ,today, jepyo, crpNm, dang_gigan)
 
     if bool_1cha:
