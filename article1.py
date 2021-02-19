@@ -938,8 +938,8 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
         text_1cha += f"{dang_gigan} "
         n_gak=0 #'각각' 붙이기 위한
         for i in key_1cha:
-            n_h = _1cha[i]['n_h']
-            n_y_r = _1cha[i]['n_y_r']
+            n_h = _1cha[i]['n_h'].replace('-','')
+            n_y_r = _1cha[i]['n_y_r'].replace('-','')
             if n_h not in ['0', '-']: #값이 있는 경우
                 n_gak+=1
                 if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
@@ -988,9 +988,9 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
         text_1cha += f"{dang}{gigan} "
         n_gak=0
         for i in key_1cha:
-            d_h = _1cha[i]['d_h']
-            d_y_r = _1cha[i]['d_y_r']
-            d_g_r = _1cha[i]['d_g_r']
+            d_h = _1cha[i]['d_h'].replace('-','')
+            d_y_r = _1cha[i]['d_y_r'].replace('-','')
+            d_g_r = _1cha[i]['d_g_r'].replace('-','')
             if d_h not in ['0', '-']: #값이 있는 경우
                 n_gak += 1
                 if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
