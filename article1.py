@@ -931,6 +931,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
     bool_tit_ind = False  #제목에 넣을 값 뽑기
     bool_tit_plma = False # 제목에 들어갈 증감 뽑기
+    tit_cmd = False # '손실'여부 기록
 
     #4분기 누계실적이 있을 경우. 이걸 우선적으로 작성.
     if last_year and bool_1cha:
@@ -938,8 +939,8 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
         text_1cha += f"{dang_gigan} "
         n_gak=0 #'각각' 붙이기 위한
         for i in key_1cha:
-            n_h = _1cha[i]['n_h'].replace('-','')
-            n_y_r = _1cha[i]['n_y_r'].replace('-','')
+            n_h = _1cha[i]['n_h']
+            n_y_r = _1cha[i]['n_y_r']
             if n_h not in ['0', '-']: #값이 있는 경우
                 n_gak+=1
                 if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
@@ -961,15 +962,27 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                     if bool(re.search('축소|확대',plma_ment)):
                         hat ='됐'
                         plma_ment_1 = plma_ment.replace('적자','적자가')
-                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(n_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
+                    temp_1cha = f"{i}{jongsung(i, '은는')} {banolim(n_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
                     first_line = False
                 else:
-                    text_1cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(n_h,danwi,danwi)}원, "
+                    temp_1cha = f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(n_h,danwi,danwi)}원, "
+
+                #'손실' 이면 마이너스부호 떼기.
+                if cmd == 'sonsil':
+                    temp_1cha = temp_1cha.replace('-','')
+
+                text_1cha += temp_1cha
+
+
 
                 if not bool_tit_ind: #아직 안정해졌으면 정해줌
                     tit_ind = i
+
                     tit_d_h = n_h
+                    if cmd == 'sonsil':
+                        tit_d_h =tit_d_h.replace('-','')
                     bool_tit_ind =True
+
 
                 if not bool_tit_plma:
                     tit_plma = plma_ment[:-1]
@@ -988,9 +1001,9 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
         text_1cha += f"{dang}{gigan} "
         n_gak=0
         for i in key_1cha:
-            d_h = _1cha[i]['d_h'].replace('-','')
-            d_y_r = _1cha[i]['d_y_r'].replace('-','')
-            d_g_r = _1cha[i]['d_g_r'].replace('-','')
+            d_h = _1cha[i]['d_h']
+            d_y_r = _1cha[i]['d_y_r']
+            d_g_r = _1cha[i]['d_g_r']
             if d_h not in ['0', '-']: #값이 있는 경우
                 n_gak += 1
                 if yeon_gyeol:  #연결재무제표일 경우 키값에 이게 포함됨.
@@ -1017,16 +1030,26 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                     if bool(re.search('축소|확대',plma_ment)):
                         hat ='됐'
                         plma_ment_1 = plma_ment.replace('적자','적자가')
-                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(d_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
+                    temp_1cha = f"{i}{jongsung(i, '은는')} {banolim(d_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
                     first_line = False
                 else:
-                    text_1cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
+                    temp_1cha = f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
                 # text_1cha = text_1cha[:-2]+'을 각각 기록했다.'
+
+
+                #'손실' 이면 마이너스부호 떼기.
+                if cmd == 'sonsil':
+                    temp_1cha = temp_1cha.replace('-','')
+
+                text_1cha += temp_1cha
 
                 if not bool_tit_ind: #아직 안정해졌으면 정해줌
                     tit_ind = i
                     tit_d_h = d_h
                     bool_tit_ind =True
+                    if cmd == 'sonsil':
+                        tit_d_h =tit_d_h.replace('-','')
+
 
                 if not bool_tit_plma:
                     tit_plma = plma_ment[:-1]
@@ -1082,7 +1105,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
 
         for i in n_list:
-            name = re.sub(r'[\(\),-]' , '', fs[i]).replace('\xa0','').replace(' ','')
+            name = re.sub(r'[,-]' , '', fs[i]).replace('\xa0','')#.replace(' ','')#원래 괄호 없애는거 있었는데 안없애기로. 띄어쓰기도 안없애기로
             if name =='기타':
                 pass
             else:
