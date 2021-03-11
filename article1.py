@@ -1024,6 +1024,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                         raise Exception("1차 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
 
 
+                first_end = True #첫줄로 끝나는 경우
                 if first_line:
                     hat = '했'
                     plma_ment_1 = plma_ment
@@ -1034,6 +1035,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                     first_line = False
                 else:
                     temp_1cha = f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
+                    first_end = False
                 # text_1cha = text_1cha[:-2]+'을 각각 기록했다.'
 
 
@@ -1060,7 +1062,9 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
             gak = '각각 '
         else:
             gak = ''
-        text_1cha = text_1cha[:-2]+ f'을 {gak}기록했다.'
+
+        if not first_end:
+            text_1cha = text_1cha[:-2]+ f'을 {gak}기록했다.'
 
 
 
@@ -1105,7 +1109,12 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
 
         for i in n_list:
+
+            #항목이름이 전부 괄호처리돼있으면 괄호만 지움.  이름 끝에 괄호 있으면 괄호 안없애고 같이 내놓음
+
             name = re.sub(r'[,-]' , '', fs[i]).replace('\xa0','')#.replace(' ','')#원래 괄호 없애는거 있었는데 안없애기로. 띄어쓰기도 안없애기로
+            if bool(re.search(r'^\(.*\)$',name)):
+                name = re.sub('[\(\)]','',name)
             if name =='기타':
                 pass
             else:
@@ -1114,12 +1123,18 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                 _2cha[name]['d_y_r']= inc_rate(fs[i+5]) #당기, 전년대비 비율
                 _2cha[name]['d_g_r']= inc_rate(fs[i+3]) #당기, 전기대비 비율
         n_gak = 0
+
+
+        bool_2cha = False #다시 False로 맞춰줌. 숫자가 없을수있기에
+
         for i in _2cha.keys():
             d_h = _2cha[i]['d_h']
             d_y_r = _2cha[i]['d_y_r']
             d_g_r = _2cha[i]['d_g_r']
 
             if d_h not in ['0', '-']: #값이 있는 경우
+                bool_2cha = True  #숫자가 하나라도 있으면 True
+
                 n_gak += 1
                 plma_ment = plma_func(d_y_r, '년')
                 if plma_ment == '오류':
@@ -1128,11 +1143,8 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                         raise Exception("2차 증감 문장에서 이상 발생")
 
                 text_2cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
-                if n_gak >2:
-                    gak = '각각 '
-                else:
-                    gak = ''
-                text_2cha = text_2cha[:-2]+ f'을 {gak}기록했다.'
+
+
                 if not bool_tit_ind: #아직 안정해졌으면 정해줌
                     tit_ind = i
                     tit_d_h = d_h
@@ -1143,6 +1155,12 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                     tit_plma = plma_ment[:-1]
                     bool_tit_plma = True
 
+        if bool_2cha:
+            if n_gak >2:
+                gak = '각각 '
+            else:
+                gak = ''
+            text_2cha = text_2cha[:-2]+ f'을 {gak}기록했다.'
 
     #이마트가 12일 제출한 영업실적 공시에 따르면 이마트의 지난 12월
     start_text = "{}{} {}일 제출한{} 영업실적 공시에 따르면 ".format(

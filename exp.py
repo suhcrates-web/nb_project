@@ -23,10 +23,12 @@ fr = []
 
 
 print(f)
+#### 영업실적 ######
 
-#영업(잠정)실적(공정공시)
+#연결재무제표기준영업(잠정)실적(공정공시)
 def yg_siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd=None, **kwargs):
     return siljeok(f=f, fs=fs, crpNm=crpNm, sou_html=sou_html, cmd='yeon')
+
 
 #영업(잠정)실적(공정공시)
 def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
@@ -170,6 +172,7 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
     bool_tit_ind = False  #제목에 넣을 값 뽑기
     bool_tit_plma = False # 제목에 들어갈 증감 뽑기
+    tit_cmd = False # '손실'여부 기록
 
     #4분기 누계실적이 있을 경우. 이걸 우선적으로 작성.
     if last_year and bool_1cha:
@@ -200,15 +203,27 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                     if bool(re.search('축소|확대',plma_ment)):
                         hat ='됐'
                         plma_ment_1 = plma_ment.replace('적자','적자가')
-                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(n_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
+                    temp_1cha = f"{i}{jongsung(i, '은는')} {banolim(n_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
                     first_line = False
                 else:
-                    text_1cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(n_h,danwi,danwi)}원, "
+                    temp_1cha = f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(n_h,danwi,danwi)}원, "
+
+                #'손실' 이면 마이너스부호 떼기.
+                if cmd == 'sonsil':
+                    temp_1cha = temp_1cha.replace('-','')
+
+                text_1cha += temp_1cha
+
+
 
                 if not bool_tit_ind: #아직 안정해졌으면 정해줌
                     tit_ind = i
+
                     tit_d_h = n_h
+                    if cmd == 'sonsil':
+                        tit_d_h =tit_d_h.replace('-','')
                     bool_tit_ind =True
+
 
                 if not bool_tit_plma:
                     tit_plma = plma_ment[:-1]
@@ -250,22 +265,34 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                         raise Exception("1차 증감 문장에서 이상 발생") #그것도 없으면 exception. 근데 없는건 애초에 1차에 넣지를 않기에 여기까지 안옴.
 
 
+                first_end = True #첫줄로 끝나는 경우
                 if first_line:
                     hat = '했'
                     plma_ment_1 = plma_ment
                     if bool(re.search('축소|확대',plma_ment)):
                         hat ='됐'
                         plma_ment_1 = plma_ment.replace('적자','적자가')
-                    text_1cha += f"{i}{jongsung(i, '은는')} {banolim(d_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
+                    temp_1cha = f"{i}{jongsung(i, '은는')} {banolim(d_h,danwi,danwi)}원으로 {plma_ment_1[:-1]}{hat}다. "
                     first_line = False
                 else:
-                    text_1cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
+                    temp_1cha = f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
+                    first_end = False
                 # text_1cha = text_1cha[:-2]+'을 각각 기록했다.'
+
+
+                #'손실' 이면 마이너스부호 떼기.
+                if cmd == 'sonsil':
+                    temp_1cha = temp_1cha.replace('-','')
+
+                text_1cha += temp_1cha
 
                 if not bool_tit_ind: #아직 안정해졌으면 정해줌
                     tit_ind = i
                     tit_d_h = d_h
                     bool_tit_ind =True
+                    if cmd == 'sonsil':
+                        tit_d_h =tit_d_h.replace('-','')
+
 
                 if not bool_tit_plma:
                     tit_plma = plma_ment[:-1]
@@ -276,7 +303,9 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
             gak = '각각 '
         else:
             gak = ''
-        text_1cha = text_1cha[:-2]+ f'을 {gak}기록했다.'
+
+        if not first_end:
+            text_1cha = text_1cha[:-2]+ f'을 {gak}기록했다.'
 
 
 
@@ -321,7 +350,12 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
 
 
         for i in n_list:
-            name = re.sub(r'[\(\),-]' , '', fs[i]).replace('\xa0','').replace(' ','')
+
+            #항목이름이 전부 괄호처리돼있으면 괄호만 지움.  이름 끝에 괄호 있으면 괄호 안없애고 같이 내놓음
+
+            name = re.sub(r'[,-]' , '', fs[i]).replace('\xa0','')#.replace(' ','')#원래 괄호 없애는거 있었는데 안없애기로. 띄어쓰기도 안없애기로
+            if bool(re.search(r'^\(.*\)$',name)):
+                name = re.sub('[\(\)]','',name)
             if name =='기타':
                 pass
             else:
@@ -330,12 +364,18 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                 _2cha[name]['d_y_r']= inc_rate(fs[i+5]) #당기, 전년대비 비율
                 _2cha[name]['d_g_r']= inc_rate(fs[i+3]) #당기, 전기대비 비율
         n_gak = 0
+
+
+        bool_2cha = False #다시 False로 맞춰줌. 숫자가 없을수있기에
+
         for i in _2cha.keys():
             d_h = _2cha[i]['d_h']
             d_y_r = _2cha[i]['d_y_r']
             d_g_r = _2cha[i]['d_g_r']
 
             if d_h not in ['0', '-']: #값이 있는 경우
+                bool_2cha = True  #숫자가 하나라도 있으면 True
+
                 n_gak += 1
                 plma_ment = plma_func(d_y_r, '년')
                 if plma_ment == '오류':
@@ -344,11 +384,8 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                         raise Exception("2차 증감 문장에서 이상 발생")
 
                 text_2cha += f"{i}{jongsung(i, '은는')} {plma_ment} {banolim(d_h,danwi,danwi)}원, "
-                if n_gak >2:
-                    gak = '각각 '
-                else:
-                    gak = ''
-                text_2cha = text_2cha[:-2]+ f'을 {gak}기록했다.'
+
+
                 if not bool_tit_ind: #아직 안정해졌으면 정해줌
                     tit_ind = i
                     tit_d_h = d_h
@@ -359,9 +396,15 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
                     tit_plma = plma_ment[:-1]
                     bool_tit_plma = True
 
+        if bool_2cha:
+            if n_gak >2:
+                gak = '각각 '
+            else:
+                gak = ''
+            text_2cha = text_2cha[:-2]+ f'을 {gak}기록했다.'
 
     #이마트가 12일 제출한 영업실적 공시에 따르면 이마트의 지난 12월
-    start_text = "{}{} {}일 제출한{} 영업실적 공시에 따르면 {}의 ".format(
+    start_text = "{}{} {}일 제출한{} 영업실적 공시에 따르면 ".format(
         crpNm,jongsung(crpNm,'이가') ,today, jepyo, crpNm, dang_gigan)
 
     if bool_1cha:
@@ -389,13 +432,14 @@ def siljeok(f=None, fs=None, crpNm=None, sou_html=None, cmd =None, **kwargs):
     return {'title':title, 'article':article, 'table': ['실적내용', '정보제공내역', -2]}
 
 
+
 end_time = time.time()
 print((end_time-start_time))
 
 if __name__ == "__main__":
-    crpNm= '비비안'
+    crpNm= '이마트'
     stockcode = '123'
-    result = yg_siljeok(f=f, fs=fs, crpNm=crpNm)
+    result = siljeok(f=f, fs=fs, crpNm=crpNm)
     print(result['title'])
     print(result['article'])
     # temp = juju_byun(f=f, crpNm=crpNm)
