@@ -754,6 +754,8 @@ def juju_change(f=None, fs=None, crpNm=None, sou_html=None, stock_code= None, **
 
     if VIP:
         title += '['+ VIP_name  +']'
+    else:
+        Exception("국민연금 아니라서 안냄")
 
     temp = f[fs.index("변경전최대주주")-1]
     title += '{} 최대주주 {} → {}'.format(crpNm, temp, after_change)
