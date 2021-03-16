@@ -8,6 +8,10 @@ from datetime import datetime, date
 real_do = ['단일판매ㆍ공급계약체결(자율공시)', '단일판매ㆍ공급계약체결', '연결재무제표기준영업(잠정)실적(공정공시)', '영업(잠정)실적(공정공시)', '임원ㆍ주요주주특정증권등소유상황보고서', '최대주주변경']
 
 
+#마이너스 부호 떼줌
+def nomi(num):
+    return str(num).replace('-','')
+
 def jongsung(word, context):
     ja = word[-1] #마지막 글자
     jong = ((ord(ja)-ord('가'))/28)%1

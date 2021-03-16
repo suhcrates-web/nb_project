@@ -4,7 +4,7 @@
 from datetime import date, datetime
 from banolim import banolim
 import pandas, re, math
-from toolBox import jongsung, word_to_date, siljeok_gigan, inc_rate, dadum_tong_mun, dangsa, bodo_hm
+from toolBox import jongsung, word_to_date, siljeok_gigan, inc_rate, dadum_tong_mun, dangsa, bodo_hm, nomi
 from kospi200_list import kos_list
 
 
@@ -686,7 +686,7 @@ def juju_state(f=None, crpNm=None, sou_html=None, **kwargs):
         title += bogoja +', '
 
     if not new:
-        title += '{} 주식 {}% {}...지분 {}% → {}%'.format(opCorp, jeung_bi, do_su, jeon_bi, ee_bi)
+        title += '{} 주식 {}% {}...지분 {}% → {}%'.format(opCorp, nomi(jeung_bi), do_su, jeon_bi, ee_bi)
 
     else:
         title += '{} 주식 {} {}...지분 {}%'.format(opCorp, banolim(jeung_su,'원','만'), ee_bi)
@@ -694,7 +694,8 @@ def juju_state(f=None, crpNm=None, sou_html=None, **kwargs):
     article = """
     {}{} {}의 총 주식 수의 {}%({}주)를 장내 {}했다고 {}일 공시했다.<br><br>
     이에 따라 지분은 {} {}.
-    """.format(bogoja, jongsung(bogoja,'은는'), opCorp, jeung_bi, banolim(jeung_su,'원','일'), do_su, today, date_ment,
+    """.format(bogoja, jongsung(bogoja,'은는'), opCorp, nomi(jeung_bi), nomi(banolim(jeung_su,'원','일')), do_su, today,
+               date_ment,
                bi_ment )
 
     return {'title':title, 'article':article, 'table': ['보고서<br/>', '이번보고서']}
