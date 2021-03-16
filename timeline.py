@@ -48,17 +48,23 @@ def process(cycle):
             stock_code = watch_list.iloc[i]['stock_code']
             report_nm = watch_list.iloc[i]['report_nm'].replace(' ','')   #api에서 온 보고서이름 그대로임.
             report_nm_raw = report_nm
+
             # report_nm_raw 는 원래 제목 그대로
             # report_nm 은 특수경우 괄호내용을 떼고 일반화한것.
             rm = watch_list.iloc[i]['rm']
 
             cmd = ''
+
             #괄호 떼고 일반화. 여기서 report_nm과 report_nm_raw가 달라짐.
-            # if bool(re.search(r'조회공시요구' and r'답변', report_nm)):  #조회공시요구에대한답변 보고서일 경우
-            #     cmd = re.findall(r'(?<=\()[^\(\)]+(?=\))', report_nm)
-            #     report_nm = re.sub(r'\([^\(\)]+\)', '', report_nm)  # 괄호 안에 있는걸 지워버림
-            # else:
-            #     cmd = ''
+            #해당 키워드 있을때만  괄호 떼기
+            general_list = ['사업보고서'] #조회공시요구 는 아직
+            for i in general_list:
+                if bool(re.search(i, report_nm)):
+                    cmd = re.findall(r'(?<=\()[^\(\)]+(?=\))', report_nm)
+                    report_nm = re.sub(r'\([^\(\)]+\)', '', report_nm)  # 괄호 안에 있는걸 지워버림
+                else:
+                    cmd = ''
+
 
             if report_nm in list_can:  # 처리가능 보고서 목록과 비교.
                 rcept_no = watch_list.iloc[i]['rcept_no']
@@ -99,7 +105,7 @@ def process(cycle):
                 message = 'success' #기록에 남길 메세지
                 title_list.append(title) #텔레그램 보낼 리스트 (이제 안보냄. 진짜는 title_real_list)
 
-                if watch_all_dict[i]['report_nm_raw'] in real_do:
+                if watch_all_dict[i]['report_nm'] in real_do:
                     title_real_list.append(title)
 
 

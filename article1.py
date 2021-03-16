@@ -1259,7 +1259,22 @@ dict_can['조회공시요구(현저한시황변동)에대한답변(미확정)'] 
 dict_can['조회공시요구(현저한시황변동)에대한답변(중요공시대상없음)'] = johwae_ans
 dict_can['조회공시요구(현저한시황변동)에대한답변(중요정보없음)'] = johwae_ans
 
+def saeop_bogoseo_alarm(f=None, fs=None, crpNm=None, sou_html=None, stock_code= None, url=None, **kwargs):
+    list = ['은행','증권', '보험', '금융', '투자', '카드']
+    ok = False
+    for i in list:
+        if bool(re.search(i, crpNm)):
+            ok = True
+    if ok:
+        title = f'{crpNm} 사업보고서'
+        article = ''
 
+        #카카오 신호
+
+        return {'title':title, 'article':article, 'table': ['사업연도', '모형등급']}
+    else:
+        raise Exception('증권 관련 아님')
+dict_can['사업보고서'] = saeop_bogoseo_alarm
 
 if __name__ == "__main__":
     # print(f)

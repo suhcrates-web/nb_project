@@ -44,7 +44,8 @@ def writer(rcept_no = None, stock_code = None):
     art_fun = dict_can[bogoNm] # 보고서 이름에 맞는 함수 가져옴
 
     ##list는 기사 원문을 만듦.
-    temp_artc = art_fun(f = sou_list, fs =sou_list_s, crpNm = crpNm, sou_html =sou_html, stock_code = stock_code, bogoNm= bogoNm) #
+    temp_artc = art_fun(f = sou_list, fs =sou_list_s, crpNm = crpNm, sou_html =sou_html, stock_code = stock_code,
+                        bogoNm= bogoNm, url=url) #
     # 리스트를 넣으면 기사가 나옴. title과
     # article
     # 딕셔너리로.
