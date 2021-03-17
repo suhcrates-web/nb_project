@@ -58,13 +58,12 @@ def process(cycle):
             #괄호 떼고 일반화. 여기서 report_nm과 report_nm_raw가 달라짐.
             #해당 키워드 있을때만  괄호 떼기
             general_list = ['사업보고서'] #조회공시요구 는 아직
-            for i in general_list:
-                if bool(re.search(i, report_nm)):
+            for k in general_list:
+                if bool(re.search(k, report_nm)):
                     cmd = re.findall(r'(?<=\()[^\(\)]+(?=\))', report_nm)
                     report_nm = re.sub(r'\([^\(\)]+\)', '', report_nm)  # 괄호 안에 있는걸 지워버림
                 else:
                     cmd = ''
-
 
             if report_nm in list_can:  # 처리가능 보고서 목록과 비교.
                 rcept_no = watch_list.iloc[i]['rcept_no']
