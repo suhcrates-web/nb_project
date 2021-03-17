@@ -56,10 +56,12 @@ def writer(rcept_no = None, stock_code = None):
     article = temp_artc['article']
     #테이블 나누는 기준
     gijun = temp_artc['table']
-
-    ##html은 테이블을 만듦
-    global table
-    table1 = table.table(sou_html, gijun)
+    if gijun in ['']: #테이블 설정이 '' 이면 걍 빈값을 붙임.
+        table1 = ''
+    else:
+        ##html은 테이블을 만듦
+        global table
+        table1 = table.table(sou_html, gijun)
 
     article_t = article + table1 #+"<br>※해당 기사는 뉴스1 경제·산업부가 자체 개발한 뉴스봇에 의해 작성됐습니다."
     #
@@ -83,7 +85,7 @@ if __name__ == '__main__':
     # print(todo_list)
     # print(todo_list)
     #
-    writer(20210219800624)
+    writer(20210317000810)
     # print(real_do)
     #
     # for i in todo_list:
