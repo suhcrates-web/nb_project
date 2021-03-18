@@ -6,6 +6,7 @@ from banolim import banolim
 import pandas, re, math
 from toolBox import jongsung, word_to_date, siljeok_gigan, inc_rate, dadum_tong_mun, dangsa, bodo_hm, nomi
 from kospi200_list import kos_list
+from telebot import bot_GM
 
 
 #처리할 수있는 공시유형 목록. 빈칸 유지. 아래 append를 통해 채워짐.
@@ -1261,13 +1262,21 @@ dict_can['조회공시요구(현저한시황변동)에대한답변(중요정보�
 
 def saeop_bogoseo_alarm(f=None, fs=None, crpNm=None, sou_html=None, stock_code= None, url=None, **kwargs):
     list = ['은행','증권', '보험', '금융', '투자', '카드', '생명', '에셋']
+    not_list = ['과학','바이오']
     ok = False
     for i in list:
         if bool(re.search(i, crpNm)):
             ok = True
+
+    for i in not_list:
+        if bool(re.search(i, crpNm)):
+            ok = False
+
     if ok:
         title = f'{crpNm} 사업보고서'
         article = ''
+
+        bot_GM(type = 'o', message=f"[금융팀]{title} 올렸습니다. \n {url}")
 
         #카카오 신호
 
