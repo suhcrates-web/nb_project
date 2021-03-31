@@ -1262,7 +1262,7 @@ dict_can['조회공시요구(현저한시황변동)에대한답변(중요정보�
 
 def saeop_bogoseo_alarm(f=None, fs=None, crpNm=None, sou_html=None, stock_code= None, url=None, **kwargs):
     list = ['은행','증권', '보험', '금융', '투자', '카드', '생명', '에셋']
-    not_list = ['과학','바이오']
+    not_list = ['과학','바이오', '부동산']
     ok = False
     for i in list:
         if bool(re.search(i, crpNm)):

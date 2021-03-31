@@ -157,7 +157,7 @@ def timeline():
             cycle += 1
             time.sleep(120)
         else:
-            bot('c' , str(now)+ " 금일 뉴스봇 가동 종료")
+            bot('c' , str(now)+ " 뉴스봇 퇴근 zz")
             return 'end'
 
 if __name__ == '__main__':
