@@ -4,7 +4,7 @@ from article1 import dict_can
 from datetime import datetime
 import csv, time, re
 import traceback
-from telebot import bot
+from telebot import bot, bot_public
 from toolBox import real_do
 
 
@@ -76,7 +76,7 @@ def process(cycle):
                 #watch_all_dict[rcept_no]['rm'] = rm # 비고. 유코채넥
 
 
-    watch_all_list = list(watch_all_dict.keys())
+    watch_all_list = list(watch_all_dict.keys())[:10]
     print(watch_all_list)
 
     todo_list = []
@@ -118,6 +118,13 @@ def process(cycle):
             list_done_0.append(watch_all_dict[i]['report_nm_raw'])  #3번 : 보고서 이름
             list_done_0.append(watch_all_dict[i]['corp_name']) # 4번 회사 이름
             list_done.append(list_done_0)
+
+        if len(title_list) == 1:
+            bot_public('c', title_list[0] + "\n올렸습니다!\n" + "http://testbot.ddns.net:5231/bot_v3")
+        elif len(title_list) >1:
+            bot_public('c', title_real_list[0] + "\n 외 " + str(len(title_list) - 1) + "건 "
+                                                                               "올렸습니다!\n" + "http://testbot.ddns.net:5231/bot_v3")
+
         if len(title_real_list) == 0:
             print("집배신 보낸 거 없음")
         elif len(title_real_list) ==1:
@@ -125,6 +132,7 @@ def process(cycle):
         else:
             bot('c',title_real_list[0] +"\n 외 "+ str(len(title_list)-1)+"건 "
                                                                       "올렸습니다!\n"+"http://testbot.ddns.net:5231/bot_v3")
+
 
         #r+는 앞에서부터 덮어씌움.
         with open('data/list_done/'+today+'.csv', 'a+', encoding='utf-8', newline='') as f:
