@@ -155,6 +155,11 @@ def process(cycle):
     return ''
 
 def timeline():
+    now = datetime.today().strftime(format='%H:%M')
+    if True:#now < '09:10':
+        bot_public('o', "뉴스봇 가동 시작 \n 아침9시~저녁7시반 가동 \n 문의사항 kakao: suhcrates1\n 개발자 : 서영빈 연합인포맥스 기자")
+
+
     op = True
     cycle=1
     while op == True:
