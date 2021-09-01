@@ -470,20 +470,19 @@ def danil(f=None, fs=None, crpNm=None, stock_code = None, sou_html=None, **kwarg
 
 
     #### 필터구간 ####
-    force = True #전부 통과
-    # if not force: #디폴트는 False. 위에서 '공사수주'일 경우 True.
-    #     if (stock_code in kos_list()['all_num']):
-    #         force = True
-    # if not force:
-    #     if True in [float(machulRate) > 10]:
-    #         if True in [float(tot) > 5000000000, float(machulRate) >= 100]:
-    #             force = True
-    #
-    # if not force:
-    #     for i in f:
-    #         if bool(re.search(r'코로나|covid|폐질환|삼성|현대|이재명|samsung|엘지|hyundai|문재인',i.lower())):
-    #             force = True
-    #             break
+    if not force: #디폴트는 False. 위에서 '공사수주'일 경우 True.
+        if (stock_code in kos_list()['all_num']):
+            force = True
+    if not force:
+        if True in [float(machulRate) > 10]:
+            if True in [float(tot) > 5000000000, float(machulRate) >= 100]:
+                force = True
+
+    if not force:
+        for i in f:
+            if bool(re.search(r'코로나|covid|폐질환|삼성|현대|이재명|samsung|엘지|hyundai|문재인',i.lower())):
+                force = True
+                break
     if force:
         return {'title':title, 'article':article, 'table': '종료일'}
     else:

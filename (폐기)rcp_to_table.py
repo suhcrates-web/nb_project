@@ -4,13 +4,13 @@
 import requests, xmltodict, json, pandas, re, time, csv
 from bs4 import BeautifulSoup
 
-# 폐기버전 리턴 중  {'crpNm': crpNm, 'bogoNm':bogoNm,} 이부분이 없어짐.  회사이름, 보고서이름은 리턴값에 포함 안되는것.
+#2021년9월1일  다트 홈페이지 업데이트에 따라 폐기됨. 일부 수정.
+
 if __name__ == "__main__":
     #20201210000537 #유상증자
     #20201208000293 # 유상증자(정정)
 
     rcpNo = '20210901000087'
-    rcpNo= '20210901800227'
 
 def rcpNo_to_table(rcpNo):
     #rcpNo를 통해 dcmNo를 추론. 그래야 공시 html 가져올 수 있음.
@@ -18,29 +18,20 @@ def rcpNo_to_table(rcpNo):
     # <a href="#download" onclick="openPdfDownload('20201207800563', '7624179'); return false;" > 여기 숨어있음.
     content = requests.get(url0)#.content.decode('utf-8')
     content = BeautifulSoup(content.text, 'html.parser')
-    # print(content)
+    print(content)
     # print(url0)
 
 
     #html인지 찾기
-    viewDoc_s = re.findall(r'viewDoc\(.*\)',str(content))
-        #viewDoc('20210901000087', '8202472', '1', '681', '1905', 'dart3.xsd','') 이렇게생긴거 가져옴
-    viewDoc = ''
-    for vD in viewDoc_s:
-        if bool(re.search(rcpNo, vD)):
-            viewDoc = vD
-            break
-    viewDoc_list = viewDoc.replace('viewDoc','').replace('(','').replace(')','').replace(' ','').replace("'",'').split(',')
+    viewDoc = re.findall(r'viewDoc\(.*\)',str(content))[0]
     if_html = bool(re.search(r'HTML', viewDoc))
     if_xsd =  bool(re.search(r'dart3.xsd', viewDoc))
-    dcmNo = viewDoc_list[1]
 
-    title_ele  = content.title.text.strip().split('/')
-    crpNm = title_ele[0]
-    bogoNm = title_ele[1]
+    crpNm = content.find('a',{'href': '#companyview'})['title'] # 기업이름. 임시로 여기에 둠
+    bogoNm = content.find('option', {'value':'rcpNo={}'.format(rcpNo)})['title'] #보고서 이름
 
-    # content = content.find('a',{'href':'#download'})['onclick']
-    # dcmNo = re.findall(r'\'(\d{7})\'', content)[0].replace("'",'')  # dcm넘버 찾기
+    content = content.find('a',{'href':'#download'})['onclick']
+    dcmNo = re.findall(r'\'(\d{7})\'', content)[0].replace("'",'')  # dcm넘버 찾기
 
     time.sleep(5) # 5초 쉼
     #rcpNo와 dcmNo를 통해 공시 html을 가져옴
@@ -88,7 +79,6 @@ def rcpNo_to_table(rcpNo):
 
 if __name__ == "__main__":
     result = rcpNo_to_table(rcpNo)
-    print(result)
     print(result['url0'])
     print(result['url'])
     print(result['list'])
