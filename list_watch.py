@@ -9,7 +9,7 @@ yesterday = yesterday.strftime(format='%Y%m%d')
 def list_watch(i):
     url = 'https://opendart.fss.or.kr/api/list.json'
     data = {  #없는건 ''로 남겨두지 말고 그냥 블라인드 해버리셈
-        'crtfc_key' : '5d33a523ba2d678b84673a4a54f9b7efe5abf9c0',  #인증키
+        'crtfc_key' : '4f94fca4e4a764b80e19e318be285859390dc2ad',  #인증키	5d33a523ba2d678b84673a4a54f9b7efe5abf9c0
         # 'corp_code' : '',  #고유번호
         'bgn_de' : today, #시작일
         'end_de' : today, #종료일

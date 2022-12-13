@@ -122,7 +122,7 @@ def process(cycle):
         if len(title_list) == 1:
             bot_public('c', title_list[0] + "\n올렸습니다!\n" + "http://testbot.ddns.net:5231/bot_v3")
         elif len(title_list) >1:
-            bot_public('c', title_real_list[0] + "\n 외 " + str(len(title_list) - 1) + "건 "
+            bot_public('c', title_list[0] + "\n 외 " + str(len(title_list) - 1) + "건 "
                                                                                "올렸습니다!\n" + "http://testbot.ddns.net:5231/bot_v3")
 
         if len(title_real_list) == 0:
